@@ -1,4 +1,5 @@
 import InfoTip from '../shared/InfoTip'
+import CurrencyInput from '../shared/CurrencyInput'
 import { fmtCr } from '../../utils/format'
 
 export default function PropertyDetails({ form, onChange, computedValuation }) {
@@ -10,7 +11,7 @@ export default function PropertyDetails({ form, onChange, computedValuation }) {
           <label>Property purchase value <InfoTip tip="Original agreed price at time of purchase" /></label>
           <div className="input-wrap has-prefix">
             <span className="prefix">₹</span>
-            <input type="number" value={form.propertyValue} onChange={e => onChange('propertyValue', e.target.value)} step="100000" />
+            <CurrencyInput value={form.propertyValue} onChange={v => onChange('propertyValue', v)} />
           </div>
         </div>
         <div className="field">
@@ -37,7 +38,7 @@ export default function PropertyDetails({ form, onChange, computedValuation }) {
             <label>Current market value <InfoTip tip="Estimated value at valuation date — can be a future projection" /></label>
             <div className="input-wrap has-prefix">
               <span className="prefix">₹</span>
-              <input type="number" value={form.currentValue} onChange={e => onChange('currentValue', e.target.value)} step="100000" />
+              <CurrencyInput value={form.currentValue} onChange={v => onChange('currentValue', v)} />
             </div>
           </div>
         ) : (

@@ -42,7 +42,7 @@ describe('ExtraExpenses', () => {
   it('calls onChange when an amount input changes', () => {
     const onChange = vi.fn()
     render(<ExtraExpenses events={defaultEvents} onAdd={vi.fn()} onRemove={vi.fn()} onChange={onChange} />)
-    fireEvent.change(screen.getByDisplayValue('1300000'), { target: { value: '1500000' } })
+    fireEvent.change(screen.getByDisplayValue('13,00,000'), { target: { value: '1500000' } })
     expect(onChange).toHaveBeenCalledWith(2, 'amount', '1500000')
   })
 

@@ -1,4 +1,5 @@
 import InfoTip from '../shared/InfoTip'
+import CurrencyInput from '../shared/CurrencyInput'
 import { fmtINR, fmtL } from '../../utils/format'
 
 export default function LoanDetails({ form, onChange, computedLoan }) {
@@ -21,14 +22,14 @@ export default function LoanDetails({ form, onChange, computedLoan }) {
           <label>Loan amount</label>
           <div className="input-wrap has-prefix">
             <span className="prefix">₹</span>
-            <input type="number" value={form.loanAmount} onChange={e => onChange('loanAmount', e.target.value)} step="100000" />
+            <CurrencyInput value={form.loanAmount} onChange={v => onChange('loanAmount', v)} />
           </div>
         </div>
         <div className="field">
           <label>Down payment paid <InfoTip tip="Upfront amount paid at purchase, excluding loan" /></label>
           <div className="input-wrap has-prefix">
             <span className="prefix">₹</span>
-            <input type="number" value={form.downPayment} onChange={e => onChange('downPayment', e.target.value)} step="50000" />
+            <CurrencyInput value={form.downPayment} onChange={v => onChange('downPayment', v)} />
           </div>
         </div>
       </div>
@@ -39,14 +40,14 @@ export default function LoanDetails({ form, onChange, computedLoan }) {
             <label>Monthly EMI</label>
             <div className="input-wrap has-prefix">
               <span className="prefix">₹</span>
-              <input type="number" value={form.monthlyEmi} onChange={e => onChange('monthlyEmi', e.target.value)} step="500" />
+              <CurrencyInput value={form.monthlyEmi} onChange={v => onChange('monthlyEmi', v)} />
             </div>
           </div>
           <div className="field">
             <label>Current outstanding balance <InfoTip tip="Loan balance as per bank statement at valuation date" /></label>
             <div className="input-wrap has-prefix">
               <span className="prefix">₹</span>
-              <input type="number" value={form.outstandingLoan} onChange={e => onChange('outstandingLoan', e.target.value)} step="10000" />
+              <CurrencyInput value={form.outstandingLoan} onChange={v => onChange('outstandingLoan', v)} />
             </div>
           </div>
         </div>

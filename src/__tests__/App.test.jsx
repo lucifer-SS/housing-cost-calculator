@@ -23,10 +23,10 @@ describe('App — rendering', () => {
 
   it('pre-fills default form values', () => {
     render(<App />)
-    expect(screen.getByDisplayValue('11000000')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('8900000')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('75500')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('50000')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('1,10,00,000')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('89,00,000')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('75,500')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('50,000')).toBeInTheDocument()
   })
 
   it('pre-fills the two default extra expense events', () => {
@@ -44,9 +44,9 @@ describe('App — rendering', () => {
 describe('App — loan mode toggle', () => {
   it('switches to Rate & Tenure mode, hiding EMI inputs', async () => {
     render(<App />)
-    expect(screen.getByDisplayValue('75500')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('75,500')).toBeInTheDocument()
     fireEvent.click(screen.getByText('Rate & Tenure'))
-    expect(screen.queryByDisplayValue('75500')).not.toBeInTheDocument()
+    expect(screen.queryByDisplayValue('75,500')).not.toBeInTheDocument()
     expect(screen.getByDisplayValue('8.5')).toBeInTheDocument()
     expect(screen.getByDisplayValue('240')).toBeInTheDocument()
   })
@@ -55,7 +55,7 @@ describe('App — loan mode toggle', () => {
     render(<App />)
     fireEvent.click(screen.getByText('Rate & Tenure'))
     fireEvent.click(screen.getByText('EMI & Outstanding'))
-    expect(screen.getByDisplayValue('75500')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('75,500')).toBeInTheDocument()
     expect(screen.queryByDisplayValue('8.5')).not.toBeInTheDocument()
   })
 })
@@ -126,7 +126,7 @@ describe('App — calculate', () => {
     const firstXirr = screen.getByText(/XIRR: \d+\.\d+% per annum/).textContent
 
     // Change current value and recalculate
-    fireEvent.change(screen.getByDisplayValue('18000000'), { target: { value: '22000000' } })
+    fireEvent.change(screen.getByDisplayValue('1,80,00,000'), { target: { value: '22000000' } })
     await user.click(screen.getByText('Calculate Returns'))
     await waitFor(() => {
       const newXirr = screen.getByText(/XIRR: \d+\.\d+% per annum/).textContent

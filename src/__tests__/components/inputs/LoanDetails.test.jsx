@@ -16,8 +16,8 @@ const roiForm = { ...emiForm, loanMode: 'roi' }
 describe('LoanDetails — EMI mode', () => {
   it('renders EMI and outstanding inputs', () => {
     render(<LoanDetails form={emiForm} onChange={vi.fn()} computedLoan={null} />)
-    expect(screen.getByDisplayValue('75500')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('7263000')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('75,500')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('72,63,000')).toBeInTheDocument()
   })
 
   it('does not render rate/tenure inputs', () => {
@@ -49,8 +49,8 @@ describe('LoanDetails — Rate & Tenure mode', () => {
 
   it('does not render EMI/outstanding inputs', () => {
     render(<LoanDetails form={roiForm} onChange={vi.fn()} computedLoan={null} />)
-    expect(screen.queryByDisplayValue('75500')).not.toBeInTheDocument()
-    expect(screen.queryByDisplayValue('7263000')).not.toBeInTheDocument()
+    expect(screen.queryByDisplayValue('75,500')).not.toBeInTheDocument()
+    expect(screen.queryByDisplayValue('72,63,000')).not.toBeInTheDocument()
   })
 
   it('shows computed EMI and outstanding', () => {

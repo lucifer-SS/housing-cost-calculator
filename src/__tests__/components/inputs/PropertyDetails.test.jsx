@@ -13,8 +13,8 @@ const form = {
 describe('PropertyDetails', () => {
   it('renders all four inputs with correct initial values', () => {
     render(<PropertyDetails form={form} onChange={vi.fn()} />)
-    expect(screen.getByDisplayValue('11000000')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('18000000')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('1,10,00,000')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('1,80,00,000')).toBeInTheDocument()
     expect(screen.getByDisplayValue('2019-05-01')).toBeInTheDocument()
     expect(screen.getByDisplayValue('2026-05-01')).toBeInTheDocument()
   })
@@ -22,7 +22,7 @@ describe('PropertyDetails', () => {
   it('calls onChange with correct key and value for property value', () => {
     const onChange = vi.fn()
     render(<PropertyDetails form={form} onChange={onChange} />)
-    fireEvent.change(screen.getByDisplayValue('11000000'), { target: { value: '12000000' } })
+    fireEvent.change(screen.getByDisplayValue('1,10,00,000'), { target: { value: '12000000' } })
     expect(onChange).toHaveBeenCalledWith('propertyValue', '12000000')
   })
 
@@ -49,7 +49,7 @@ describe('PropertyDetails', () => {
   it('switches to Appreciation % mode and shows appreciation input', () => {
     const onChange = vi.fn()
     render(<PropertyDetails form={{ ...form, valuationMode: 'appreciation' }} onChange={onChange} />)
-    expect(screen.queryByDisplayValue('18000000')).not.toBeInTheDocument()
+    expect(screen.queryByDisplayValue('1,80,00,000')).not.toBeInTheDocument()
     expect(screen.getByDisplayValue('8')).toBeInTheDocument()
   })
 

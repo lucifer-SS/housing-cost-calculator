@@ -1,4 +1,5 @@
 import InfoTip from '../shared/InfoTip'
+import CurrencyInput from '../shared/CurrencyInput'
 
 export default function RentSavings({ form, onChange }) {
   return (
@@ -9,7 +10,7 @@ export default function RentSavings({ form, onChange }) {
           <label>Monthly rent saved <InfoTip tip="What you'd have paid as rent — netted against EMI from moved-in date" /></label>
           <div className="input-wrap has-prefix">
             <span className="prefix">₹</span>
-            <input type="number" value={form.monthlyRent} onChange={e => onChange('monthlyRent', e.target.value)} step="1000" />
+            <CurrencyInput value={form.monthlyRent} onChange={v => onChange('monthlyRent', v)} />
           </div>
         </div>
         <div className="field">

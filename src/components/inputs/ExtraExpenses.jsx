@@ -1,3 +1,5 @@
+import CurrencyInput from '../shared/CurrencyInput'
+
 export default function ExtraExpenses({ events, onAdd, onRemove, onChange }) {
   return (
     <div className="input-section">
@@ -25,7 +27,7 @@ export default function ExtraExpenses({ events, onAdd, onRemove, onChange }) {
               <label>Amount (₹)</label>
               <div className="input-wrap has-prefix">
                 <span className="prefix">₹</span>
-                <input type="number" value={ev.amount} onChange={e => onChange(ev.id, 'amount', e.target.value)} step="10000" />
+                <CurrencyInput value={ev.amount} onChange={v => onChange(ev.id, 'amount', v)} />
               </div>
             </div>
             <button className="remove-btn" onClick={() => onRemove(ev.id)} title="Remove">×</button>
