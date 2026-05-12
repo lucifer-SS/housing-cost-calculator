@@ -79,9 +79,9 @@ async function run() {
     verdict.includes('XIRR:')
       ? pass('Verdict rendered: ' + verdict)
       : fail('Verdict missing XIRR: ' + verdict)
-    const xirrInRange = verdict.includes('5.')
+    const xirrInRange = verdict.includes('6.')
     xirrInRange
-      ? pass('XIRR is in expected 5.x% range')
+      ? pass('XIRR is in expected 6.x% range')
       : fail('XIRR out of expected range: ' + verdict)
 
     // ── 6. Net profit row present ─────────────────────────────────────────

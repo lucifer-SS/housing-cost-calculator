@@ -29,8 +29,8 @@ describe('xirr', () => {
     expect(xirr(cfs, dates)).toBeCloseTo(0, 3)
   })
 
-  it('returns ~5.92% for the default scenario', () => {
-    // Rebuild cash flows matching App DEFAULT_FORM + DEFAULT_EVENTS
+  it('returns ~5.92% for the default scenario with 0% rent increase', () => {
+    // Rebuild cash flows matching App DEFAULT_FORM + DEFAULT_EVENTS, annualRentIncrease=0
     const purchaseDate = new Date('2019-05-01')
     const valuationDate = new Date('2026-05-01')
     const movedInDate  = new Date('2022-04-01')
@@ -51,6 +51,39 @@ describe('xirr', () => {
     cfV.push(currentValue - outstandingLoan); cfD.push(new Date(valuationDate))
 
     expect(xirr(cfV, cfD) * 100).toBeCloseTo(5.92, 1)
+  })
+
+  it('returns ~6.75% for the default scenario with 10% annual rent increase', () => {
+    // Same as above but rent compounds 10% per year from movedInDate
+    const purchaseDate = new Date('2019-05-01')
+    const valuationDate = new Date('2026-05-01')
+    const movedInDate  = new Date('2022-04-01')
+    const emiStart = new Date('2019-06-01')
+    const monthlyEmi = 75500, monthlyRent = 50000, annualRentIncrease = 10
+    const downPayment = 2100000, outstandingLoan = 7263000, currentValue = 18000000
+
+    const monthsBetweenFn = (d1, d2) =>
+      (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth())
+
+    const cfV = [-downPayment], cfD = [new Date(purchaseDate)]
+    for (let m = 0; m < 84; m++) {
+      const d = new Date(emiStart)
+      d.setMonth(d.getMonth() + m)
+      if (d >= valuationDate) break
+      if (d >= movedInDate) {
+        const yearsElapsed = Math.floor(monthsBetweenFn(movedInDate, d) / 12)
+        const effectiveRent = monthlyRent * Math.pow(1 + annualRentIncrease / 100, yearsElapsed)
+        cfV.push(-(monthlyEmi - effectiveRent))
+      } else {
+        cfV.push(-monthlyEmi)
+      }
+      cfD.push(new Date(d))
+    }
+    cfV.push(-800000);  cfD.push(new Date('2021-05-01'))
+    cfV.push(-1300000); cfD.push(new Date('2022-12-01'))
+    cfV.push(currentValue - outstandingLoan); cfD.push(new Date(valuationDate))
+
+    expect(xirr(cfV, cfD) * 100).toBeCloseTo(6.75, 1)
   })
 })
 

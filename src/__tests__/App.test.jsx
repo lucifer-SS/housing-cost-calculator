@@ -84,8 +84,8 @@ describe('App — calculate', () => {
     render(<App />)
     await user.click(screen.getByText('Calculate Returns'))
     await waitFor(() => expect(screen.getByText(/XIRR:/)).toBeInTheDocument())
-    // Default scenario yields ~5.92% XIRR
-    expect(screen.getByText(/XIRR: 5\.\d+% per annum/)).toBeInTheDocument()
+    // Default scenario with 10% annual rent increase yields ~6.75% XIRR
+    expect(screen.getByText(/XIRR: 6\.\d+% per annum/)).toBeInTheDocument()
   })
 
   it('renders all key result sections', async () => {

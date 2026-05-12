@@ -21,6 +21,7 @@ const DEFAULT_FORM = {
   loanRate: '8.5',
   loanTenure: '240',
   monthlyRent: '50000',
+  annualRentIncrease: '10',
   movedInDate: '2022-04-01',
 }
 
@@ -66,6 +67,7 @@ export default function App() {
       const movedInDate = new Date(form.movedInDate)
       const downPayment = parseFloat(form.downPayment) || 0
       const monthlyRent = parseFloat(form.monthlyRent) || 0
+      const annualRentIncrease = parseFloat(form.annualRentIncrease) || 0
       const currentValue = parseFloat(form.currentValue) || 0
       const propertyValue = parseFloat(form.propertyValue) || 0
       const loanAmount = parseFloat(form.loanAmount) || 0
@@ -105,11 +107,16 @@ export default function App() {
         const d = new Date(emiStartDate)
         d.setMonth(d.getMonth() + m)
         if (d >= valuationDate) break
-        const isRentPeriod = d >= movedInDate
-        cfVals.push(isRentPeriod ? -(monthlyEmi - monthlyRent) : -monthlyEmi)
+        if (d >= movedInDate) {
+          const yearsElapsed = Math.floor(monthsBetween(movedInDate, d) / 12)
+          const effectiveRent = monthlyRent * Math.pow(1 + annualRentIncrease / 100, yearsElapsed)
+          cfVals.push(-(monthlyEmi - effectiveRent))
+          totalRentSaved += effectiveRent
+        } else {
+          cfVals.push(-monthlyEmi)
+        }
         cfDates.push(new Date(d))
         totalEmisPaid += monthlyEmi
-        if (isRentPeriod) totalRentSaved += monthlyRent
       }
       const emiMonthsCount = cfVals.length - 1
       validEvents.forEach(e => { cfVals.push(-e.amount); cfDates.push(new Date(e.date)) })
@@ -137,7 +144,13 @@ export default function App() {
           const emiD = new Date(emiStartDate)
           emiD.setMonth(emiD.getMonth() + m - 1)
           if (emiD < valuationDate) {
-            runningOut += emiD >= movedInDate ? (monthlyEmi - monthlyRent) : monthlyEmi
+            if (emiD >= movedInDate) {
+              const yearsElapsed = Math.floor(monthsBetween(movedInDate, emiD) / 12)
+              const effectiveRent = monthlyRent * Math.pow(1 + annualRentIncrease / 100, yearsElapsed)
+              runningOut += monthlyEmi - effectiveRent
+            } else {
+              runningOut += monthlyEmi
+            }
           }
           validEvents.forEach(e => {
             if (Math.abs(monthsBetween(purchaseDate, e.date) - m) < 1) runningOut += e.amount
@@ -155,7 +168,7 @@ export default function App() {
         { date: fmtDate(purchaseDate), desc: 'Down payment', type: 'out', amount: downPayment },
         ...validEvents.map(e => ({ date: fmtDate(e.date), desc: e.label, type: 'out', amount: e.amount })),
         { date: `${fmtDate(emiStartDate)} – ${fmtDate(valuationDate)}`, desc: `EMIs (${emiMonthsCount} months × ${fmtINR(monthlyEmi)})`, type: 'out', amount: totalEmisPaid },
-        { date: `${fmtDate(movedInDate)} – ${fmtDate(valuationDate)}`, desc: `Rent saved (${rentMonthsCount} months × ${fmtINR(monthlyRent)}) — netted`, type: 'in', amount: totalRentSaved },
+        { date: `${fmtDate(movedInDate)} – ${fmtDate(valuationDate)}`, desc: `Rent saved (${rentMonthsCount} months, base ${fmtINR(monthlyRent)}${annualRentIncrease > 0 ? ` +${annualRentIncrease}%/yr` : ''}) — netted`, type: 'in', amount: totalRentSaved },
         { date: fmtDate(valuationDate), desc: 'Sale proceeds', type: 'in', amount: currentValue },
         { date: fmtDate(valuationDate), desc: 'Loan balance repaid', type: 'out', amount: outstandingLoan },
         { date: fmtDate(valuationDate), desc: 'Net in hand', type: 'net', amount: netFromSale },
@@ -164,11 +177,11 @@ export default function App() {
       setResults({
         xirrPct, netFromSale, totalCashOut, effectiveCostOut, simpleCagr,
         totalEmisPaid, totalRentSaved, outstandingLoan, emiMonthsCount, rentMonthsCount,
-        monthlyEmi, monthlyRent, loanAmount, principalRepaid, totalInterestPaid,
+        monthlyEmi, monthlyRent, annualRentIncrease, loanAmount, principalRepaid, totalInterestPaid,
         holdYears, downPayment, extraEvents: validEvents, currentValue, propertyValue,
         chartData: { labels: chartLabels, cumOutflow, propValue },
         ledger,
-        verdictSub: `True annualised return on your investment over ${holdYears} years, with every EMI dated month-by-month and ₹${(totalRentSaved / 100000).toFixed(1)}L rent savings netted in.`,
+        verdictSub: `True annualised return on your investment over ${holdYears} years, with every EMI dated month-by-month and ₹${(totalRentSaved / 100000).toFixed(1)}L rent savings netted in${annualRentIncrease > 0 ? ` (rent growing ${annualRentIncrease}%/yr)` : ''}.`,
         purchaseDate, valuationDate, emiStartDate, movedInDate,
       })
 
