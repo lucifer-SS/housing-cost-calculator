@@ -26,7 +26,7 @@ const DEFAULT_FORM = {
 }
 
 const DEFAULT_EVENTS = [
-  { id: 1, label: 'Registration + legal fees', date: '2021-05-01', amount: '800000' },
+  { id: 1, label: 'Registration + Legal fees', date: '2021-05-01', amount: '800000' },
   { id: 2, label: 'Interiors', date: '2022-12-01', amount: '1300000' },
 ]
 

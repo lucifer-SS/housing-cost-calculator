@@ -2,14 +2,14 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import ExtraExpenses from '../../../components/inputs/ExtraExpenses'
 
 const defaultEvents = [
-  { id: 1, label: 'Registration + legal fees', date: '2021-05-01', amount: '800000' },
+  { id: 1, label: 'Registration + Legal fees', date: '2021-05-01', amount: '800000' },
   { id: 2, label: 'Interiors', date: '2022-12-01', amount: '1300000' },
 ]
 
 describe('ExtraExpenses', () => {
   it('renders all existing event rows', () => {
     render(<ExtraExpenses events={defaultEvents} onAdd={vi.fn()} onRemove={vi.fn()} onChange={vi.fn()} />)
-    expect(screen.getByDisplayValue('Registration + legal fees')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Registration + Legal fees')).toBeInTheDocument()
     expect(screen.getByDisplayValue('Interiors')).toBeInTheDocument()
   })
 

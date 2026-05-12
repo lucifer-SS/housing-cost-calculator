@@ -31,7 +31,7 @@ describe('App — rendering', () => {
 
   it('pre-fills the two default extra expense events', () => {
     render(<App />)
-    expect(screen.getByDisplayValue('Registration + legal fees')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Registration + Legal fees')).toBeInTheDocument()
     expect(screen.getByDisplayValue('Interiors')).toBeInTheDocument()
   })
 
