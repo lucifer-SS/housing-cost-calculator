@@ -3,7 +3,9 @@ import PropertyDetails from '../../../components/inputs/PropertyDetails'
 
 const form = {
   propertyValue: '11000000',
+  valuationMode: 'actual',
   currentValue: '18000000',
+  annualAppreciation: '8',
   purchaseDate: '2019-05-01',
   valuationDate: '2026-05-01',
 }
@@ -42,5 +44,24 @@ describe('PropertyDetails', () => {
     render(<PropertyDetails form={form} onChange={vi.fn()} />)
     const tips = screen.getAllByText('i')
     expect(tips.length).toBeGreaterThanOrEqual(2)
+  })
+
+  it('switches to Appreciation % mode and shows appreciation input', () => {
+    const onChange = vi.fn()
+    render(<PropertyDetails form={{ ...form, valuationMode: 'appreciation' }} onChange={onChange} />)
+    expect(screen.queryByDisplayValue('18000000')).not.toBeInTheDocument()
+    expect(screen.getByDisplayValue('8')).toBeInTheDocument()
+  })
+
+  it('shows computed valuation box when computedValuation is provided', () => {
+    render(<PropertyDetails form={{ ...form, valuationMode: 'appreciation' }} onChange={vi.fn()} computedValuation={{ value: 18897000 }} />)
+    expect(screen.getByText('Computed market value')).toBeInTheDocument()
+  })
+
+  it('clicking Appreciation % calls onChange with valuationMode', () => {
+    const onChange = vi.fn()
+    render(<PropertyDetails form={form} onChange={onChange} />)
+    fireEvent.click(screen.getByText('Appreciation %'))
+    expect(onChange).toHaveBeenCalledWith('valuationMode', 'appreciation')
   })
 })

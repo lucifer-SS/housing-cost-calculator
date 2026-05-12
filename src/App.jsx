@@ -10,7 +10,9 @@ import { fmtINR, fmtDate } from './utils/format'
 
 const DEFAULT_FORM = {
   propertyValue: '11000000',
+  valuationMode: 'actual',
   currentValue: '18000000',
+  annualAppreciation: '8',
   purchaseDate: '2019-05-01',
   valuationDate: '2026-05-01',
   loanAmount: '8900000',
@@ -43,6 +45,18 @@ export default function App() {
     form.monthlyEmi, form.outstandingLoan, form.purchaseDate, form.valuationDate,
   ])
 
+  const computedValuation = useMemo(() => {
+    if (form.valuationMode !== 'appreciation') return null
+    const purchaseDate = new Date(form.purchaseDate)
+    const valuationDate = new Date(form.valuationDate)
+    const months = monthsBetween(purchaseDate, valuationDate)
+    if (months <= 0) return null
+    const propertyValue = parseFloat(form.propertyValue) || 0
+    const appreciation = parseFloat(form.annualAppreciation) || 0
+    if (!propertyValue || appreciation <= 0) return null
+    return { value: Math.round(propertyValue * Math.pow(1 + appreciation / 100, months / 12)) }
+  }, [form.valuationMode, form.purchaseDate, form.valuationDate, form.propertyValue, form.annualAppreciation])
+
   function setField(key, value) {
     setForm(f => ({ ...f, [key]: value }))
   }
@@ -68,11 +82,13 @@ export default function App() {
       const downPayment = parseFloat(form.downPayment) || 0
       const monthlyRent = parseFloat(form.monthlyRent) || 0
       const annualRentIncrease = parseFloat(form.annualRentIncrease) || 0
-      const currentValue = parseFloat(form.currentValue) || 0
       const propertyValue = parseFloat(form.propertyValue) || 0
       const loanAmount = parseFloat(form.loanAmount) || 0
       const totalMonths = monthsBetween(purchaseDate, valuationDate)
       if (totalMonths <= 0) throw new Error('Valuation date must be after purchase date.')
+      const currentValue = form.valuationMode === 'appreciation'
+        ? Math.round(propertyValue * Math.pow(1 + (parseFloat(form.annualAppreciation) || 0) / 100, totalMonths / 12))
+        : parseFloat(form.currentValue) || 0
 
       let monthlyEmi, outstandingLoan
       if (form.loanMode === 'roi') {
@@ -197,7 +213,7 @@ export default function App() {
   return (
     <div className="page">
       <Header />
-      <PropertyDetails form={form} onChange={setField} />
+      <PropertyDetails form={form} onChange={setField} computedValuation={computedValuation} />
       <LoanDetails form={form} onChange={setField} computedLoan={computedLoan} />
       <RentSavings form={form} onChange={setField} />
       <ExtraExpenses events={events} onAdd={addEvent} onRemove={removeEvent} onChange={updateEvent} />
