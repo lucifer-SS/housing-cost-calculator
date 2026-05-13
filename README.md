@@ -7,16 +7,17 @@ A browser-based tool to compute the **true XIRR (annualised return)** on a resid
 Most property ROI calculators compare only purchase price vs. current value. This calculator accounts for:
 
 - Monthly EMI outflows (dated individually for accurate XIRR)
-- Rent savings netted against EMI from move-in date
+- Rent savings netted against EMI from move-in date, with configurable annual rent increase (compounded)
 - Down payment and one-off expenses (registration, interiors, etc.)
 - Outstanding loan balance at valuation date
-- Two input modes: supply EMI & outstanding **or** interest rate & tenure — the other pair is computed
+- Two loan input modes: supply EMI & outstanding **or** interest rate & tenure — the other pair is computed
+- Two valuation modes: enter the actual market value **or** an annual appreciation % — current value is auto-computed
 
 The result is a **true XIRR** — the same metric used for mutual fund and SIP performance, making property returns directly comparable to financial assets.
 
 ## Live demo
 
-Hosted on GitHub Pages: `https://<username>.github.io/housing-cost-calculator/`
+Hosted on GitHub Pages: https://lucifer-ss.github.io/housing-cost-calculator/
 
 ## Getting started
 
@@ -72,7 +73,8 @@ src/
 │   │   ├── Results.jsx       # Orchestrates all result sub-sections
 │   │   └── GrowthChart.jsx   # Chart.js wrapper
 │   └── shared/
-│       └── InfoTip.jsx
+│       ├── InfoTip.jsx
+│       └── CurrencyInput.jsx  # Live comma-formatted ₹ input (en-IN locale)
 └── utils/
     ├── finance.js            # xirr(), solveRate(), monthsBetween(), computeLoanParams()
     └── format.js             # fmtL(), fmtCr(), fmtINR(), fmtDate()
@@ -83,9 +85,13 @@ src/
 ### XIRR
 Newton-Raphson solver. Cash flows:
 1. Down payment on purchase date (negative)
-2. Monthly EMIs — net of rent savings from move-in date (negative)
+2. Monthly EMIs — net of rent savings from move-in date (negative). Rent compounds annually: `rent × (1 + annualIncrease%)^yearsElapsed`
 3. One-off expenses at their dates (negative)
 4. `currentValue − outstandingLoan` at valuation date (positive)
+
+### Valuation modes
+- **Actual value**: enter the current market value directly
+- **Appreciation %**: `currentValue = purchaseValue × (1 + appreciation%)^(months/12)` — computed automatically from purchase date to valuation date
 
 ### Loan mode: EMI & Outstanding → implied rate & tenure
 Solves for monthly rate `r` using Newton-Raphson on the amortisation identity:
