@@ -73,7 +73,7 @@ describe('App — loan mode toggle', () => {
     fireEvent.click(screen.getByText('Rate & Tenure'))
     expect(screen.queryByDisplayValue('75,500')).not.toBeInTheDocument()
     expect(screen.getByDisplayValue('8.5')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('240')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('20')).toBeInTheDocument()
   })
 
   it('switches back to EMI mode, restoring EMI inputs', async () => {

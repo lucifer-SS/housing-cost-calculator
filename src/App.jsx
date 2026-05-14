@@ -26,7 +26,8 @@ const DEFAULT_FORM = {
   monthlyEmi: '75500',
   outstandingLoan: '7263000',
   loanRate: '8.5',
-  loanTenure: '240',
+  loanTenure: '20',
+  loanTenureUnit: 'years',
   monthlyRent: '50000',
   annualRentIncrease: '10',
   movedInDate: '2022-04-01',
@@ -98,8 +99,17 @@ export default function App() {
     return form.valuationDate ? new Date(form.valuationDate) : null
   }, [form.valuationMode, form.purchaseDate, form.valuationDate, form.appreciationTenure, form.appreciationTenureUnit])
 
-  const computedLoan = useMemo(() => computeLoanParams({ ...form, valuationDate: effectiveValuationDate?.toISOString().slice(0, 10) ?? form.valuationDate }), [
-    form.loanMode, form.loanAmount, form.loanRate, form.loanTenure,
+  const computedLoan = useMemo(() => {
+    const loanTenureMonths = form.loanTenureUnit === 'years'
+      ? (parseInt(form.loanTenure) || 0) * 12
+      : (parseInt(form.loanTenure) || 0)
+    return computeLoanParams({
+      ...form,
+      loanTenure: String(loanTenureMonths),
+      valuationDate: effectiveValuationDate?.toISOString().slice(0, 10) ?? form.valuationDate,
+    })
+  }, [
+    form.loanMode, form.loanAmount, form.loanRate, form.loanTenure, form.loanTenureUnit,
     form.monthlyEmi, form.outstandingLoan, form.purchaseDate, form.valuationDate,
     effectiveValuationDate,
   ])
@@ -160,7 +170,8 @@ export default function App() {
         loanAmount = parseFloat(form.loanAmount) || 0
         if (form.loanMode === 'roi') {
           const rAnnual = parseFloat(form.loanRate) || 0
-          const n = parseInt(form.loanTenure) || 0
+          const rawTenure = parseInt(form.loanTenure) || 0
+          const n = form.loanTenureUnit === 'years' ? rawTenure * 12 : rawTenure
           if (rAnnual <= 0 || n <= 0) throw new Error('Please enter a valid interest rate and tenure.')
           const r = rAnnual / 1200
           const fn = Math.pow(1 + r, n)

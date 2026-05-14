@@ -1,5 +1,6 @@
 import InfoTip from '../shared/InfoTip'
 import CurrencyInput from '../shared/CurrencyInput'
+import TenureInput from '../shared/TenureInput'
 import SectionWithToggle from '../shared/SectionWithToggle'
 import { fmtINR, fmtL } from '../../utils/format'
 
@@ -68,8 +69,13 @@ export default function LoanDetails({ form, onChange, computedLoan, enabled, onT
             </div>
           </div>
           <div className="field">
-            <label>Tenure (months)</label>
-            <input type="number" value={form.loanTenure} onChange={e => onChange('loanTenure', e.target.value)} step="12" />
+            <label>Tenure</label>
+            <TenureInput
+              value={form.loanTenure}
+              unit={form.loanTenureUnit}
+              onChange={v => onChange('loanTenure', v)}
+              onUnitChange={u => onChange('loanTenureUnit', u)}
+            />
           </div>
         </div>
       )}
