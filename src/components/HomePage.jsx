@@ -26,6 +26,18 @@ export default function HomePage({ onNavigate }) {
           </div>
           <span className="home-tile-arrow">→</span>
         </button>
+
+        <button className="home-tile" onClick={() => onNavigate('rent-invest')}>
+          <div className="home-tile-inner">
+            <div className="home-tile-label">SIP · SWP · XIRR</div>
+            <div className="home-tile-title">Rent &amp; Investment</div>
+            <p className="home-tile-desc">
+              See how your wealth grows renting and investing — lump sum compounded,
+              monthly SIP from EMI surplus, and corpus evolution over your chosen tenure.
+            </p>
+          </div>
+          <span className="home-tile-arrow">→</span>
+        </button>
       </div>
     </div>
   )

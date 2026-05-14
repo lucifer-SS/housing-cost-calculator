@@ -528,7 +528,7 @@
 
   .home-tiles {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 20px;
   }
 
@@ -589,7 +589,11 @@
 
   .home-tile:hover .home-tile-arrow { transform: translateX(4px); }
 
-  @media (max-width: 600px) {
+  @media (max-width: 768px) {
+    .home-tiles { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 540px) {
     .home-tiles { grid-template-columns: 1fr; }
     .home-tile { padding: 22px 20px; }
     .home-tile-title { font-size: 19px; }

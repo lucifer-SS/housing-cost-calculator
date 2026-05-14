@@ -7,6 +7,7 @@ import RentSavings from './components/inputs/RentSavings'
 import ExtraExpenses from './components/inputs/ExtraExpenses'
 import Results from './components/results/Results'
 import AmortizationPage from './components/amortization/AmortizationPage'
+import RentInvestmentPage from './components/rentinvestment/RentInvestmentPage'
 import { monthsBetween, xirr, computeLoanParams } from './utils/finance'
 import { fmtINR, fmtDate } from './utils/format'
 
@@ -39,12 +40,14 @@ let nextId = 3
 function hashToTab(hash) {
   if (hash === '#/house_investment') return 'housing'
   if (hash === '#/loan_amortization') return 'amortization'
+  if (hash === '#/rent_investment') return 'rent-invest'
   return 'home'
 }
 
 function tabToHash(tab) {
   if (tab === 'housing') return '#/house_investment'
   if (tab === 'amortization') return '#/loan_amortization'
+  if (tab === 'rent-invest') return '#/rent_investment'
   return '#/'
 }
 
@@ -280,6 +283,12 @@ export default function App() {
           >
             Loan Amortization
           </button>
+          <button
+            className={`tab-btn${activeTab === 'rent-invest' ? ' active' : ''}`}
+            onClick={() => navigate('rent-invest')}
+          >
+            Rent &amp; Investment
+          </button>
         </nav>
       )}
 
@@ -296,6 +305,7 @@ export default function App() {
       )}
 
       {activeTab === 'amortization' && <AmortizationPage />}
+      {activeTab === 'rent-invest' && <RentInvestmentPage />}
     </div>
   )
 }
