@@ -65,7 +65,7 @@ export function computeLoanParams(form) {
     const O = parseFloat(form.outstandingLoan) || 0
     if (E <= 0) return null
     if (E <= P * 0.007) return { error: 'EMI too low relative to loan — check inputs.' }
-    const r = solveRate(P, E, O > 0 ? O : P * 0.5, m)
+    const r = solveRate(P, E, O, m)
     if (r === null || r <= 0) return { error: 'Could not solve for interest rate — check your inputs.' }
     const rAnnual = r * 1200
     const nTotal = Math.log(E / (E - P * r)) / Math.log(1 + r)
