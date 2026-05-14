@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Header from './components/Header'
 import HomePage from './components/HomePage'
 import PropertyDetails from './components/inputs/PropertyDetails'
@@ -36,8 +36,33 @@ const DEFAULT_EVENTS = [
 
 let nextId = 3
 
+function hashToTab(hash) {
+  if (hash === '#/house_investment') return 'housing'
+  if (hash === '#/loan_amortization') return 'amortization'
+  return 'home'
+}
+
+function tabToHash(tab) {
+  if (tab === 'housing') return '#/house_investment'
+  if (tab === 'amortization') return '#/loan_amortization'
+  return '#/'
+}
+
 export default function App() {
-  const [activeTab, setActiveTab] = useState('home')
+  const [activeTab, setActiveTab] = useState(() => hashToTab(window.location.hash))
+
+  useEffect(() => {
+    function onHashChange() {
+      setActiveTab(hashToTab(window.location.hash))
+    }
+    window.addEventListener('hashchange', onHashChange)
+    return () => window.removeEventListener('hashchange', onHashChange)
+  }, [])
+
+  function navigate(tab) {
+    window.location.hash = tabToHash(tab)
+    setActiveTab(tab)
+  }
   const [form, setForm] = useState(DEFAULT_FORM)
   const [events, setEvents] = useState(DEFAULT_EVENTS)
   const [results, setResults] = useState(null)
@@ -237,21 +262,21 @@ export default function App() {
 
   return (
     <div className="page">
-      <Header onHome={activeTab !== 'home' ? () => setActiveTab('home') : undefined} />
+      <Header onHome={activeTab !== 'home' ? () => navigate('home') : undefined} />
 
-      {activeTab === 'home' && <HomePage onNavigate={setActiveTab} />}
+      {activeTab === 'home' && <HomePage onNavigate={navigate} />}
 
       {activeTab !== 'home' && (
         <nav className="tab-nav">
           <button
             className={`tab-btn${activeTab === 'housing' ? ' active' : ''}`}
-            onClick={() => setActiveTab('housing')}
+            onClick={() => navigate('housing')}
           >
             House Investment
           </button>
           <button
             className={`tab-btn${activeTab === 'amortization' ? ' active' : ''}`}
-            onClick={() => setActiveTab('amortization')}
+            onClick={() => navigate('amortization')}
           >
             Loan Amortization
           </button>
