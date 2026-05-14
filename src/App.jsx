@@ -72,6 +72,7 @@ export default function App() {
   const [error, setError] = useState('')
   const [loanEnabled, setLoanEnabled] = useState(false)
   const [rentEnabled, setRentEnabled] = useState(false)
+  const [extraEnabled, setExtraEnabled] = useState(false)
 
   useEffect(() => {
     const pv = parseFloat(form.propertyValue) || 0
@@ -159,9 +160,9 @@ export default function App() {
       emiStartDate.setMonth(emiStartDate.getMonth() + 1)
       const netFromSale = currentValue - outstandingLoan
 
-      const validEvents = events
-        .filter(e => e.date && parseFloat(e.amount) > 0)
-        .map(e => ({ label: e.label || 'Expense', date: new Date(e.date), amount: parseFloat(e.amount) }))
+      const validEvents = extraEnabled
+        ? events.filter(e => e.date && parseFloat(e.amount) > 0).map(e => ({ label: e.label || 'Expense', date: new Date(e.date), amount: parseFloat(e.amount) }))
+        : []
 
       // Build XIRR cash flows
       const cfVals = [-downPayment], cfDates = [new Date(purchaseDate)]
@@ -257,7 +258,7 @@ export default function App() {
         holdYears, downPayment, extraEvents: validEvents, currentValue, propertyValue,
         chartData: { labels: chartLabels, cumOutflow, propValue },
         ledger,
-        loanEnabled, rentEnabled,
+        loanEnabled, rentEnabled, extraEnabled,
         verdictSub: `True annualised return on your investment over ${holdYears} years${loanEnabled && emiMonthsCount > 0 ? ', with every EMI dated month-by-month' : ''} and ${rentDesc}.`,
         purchaseDate, valuationDate, emiStartDate, movedInDate,
       })
@@ -305,7 +306,7 @@ export default function App() {
           <PropertyDetails form={form} onChange={setField} computedValuation={computedValuation} />
           <LoanDetails form={form} onChange={setField} computedLoan={computedLoan} enabled={loanEnabled} onToggle={() => setLoanEnabled(v => !v)} />
           <RentSavings form={form} onChange={setField} enabled={rentEnabled} onToggle={() => setRentEnabled(v => !v)} />
-          <ExtraExpenses events={events} onAdd={addEvent} onRemove={removeEvent} onChange={updateEvent} />
+          <ExtraExpenses events={events} onAdd={addEvent} onRemove={removeEvent} onChange={updateEvent} enabled={extraEnabled} onToggle={() => setExtraEnabled(v => !v)} />
           <button className="calc-btn" onClick={calculate}>Calculate Returns</button>
           {error && <div className="error-msg" style={{ display: 'block' }}>{error}</div>}
           {results && <div id="results-section"><Results results={results} /></div>}

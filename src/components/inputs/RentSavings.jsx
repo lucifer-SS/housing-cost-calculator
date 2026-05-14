@@ -6,9 +6,10 @@ export default function RentSavings({ form, onChange, enabled, onToggle }) {
     <div className="input-section">
       <div className="section-label">
         Rent savings
-        <button className={`section-toggle${enabled ? ' on' : ' off'}`} onClick={onToggle}>
-          {enabled ? 'included' : 'excluded'}
-        </button>
+        <div className="section-toggle-pill">
+          <button className={`section-toggle-btn${enabled ? ' active' : ''}`} onClick={() => !enabled && onToggle()}>Included</button>
+          <button className={`section-toggle-btn${!enabled ? ' active' : ''}`} onClick={() => enabled && onToggle()}>Excluded</button>
+        </div>
       </div>
 
       {!enabled && (

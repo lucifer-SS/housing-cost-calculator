@@ -3,7 +3,13 @@ import GrowthChart from './GrowthChart'
 
 export default function Results({ results }) {
   if (!results) return null
-  const { xirrPct, netFromSale, totalCashOut, effectiveCostOut, simpleCagr, totalEmisPaid, totalRentSaved, outstandingLoan, emiMonthsCount, rentMonthsCount, monthlyEmi, monthlyRent, loanAmount, principalRepaid, totalInterestPaid, holdYears, downPayment, extraEvents, chartData, ledger, verdictSub, purchaseDate, valuationDate, emiStartDate, movedInDate } = results
+  const {
+    xirrPct, netFromSale, totalCashOut, effectiveCostOut, simpleCagr,
+    totalEmisPaid, totalRentSaved, outstandingLoan, emiMonthsCount, rentMonthsCount,
+    monthlyEmi, monthlyRent, loanAmount, principalRepaid, totalInterestPaid,
+    holdYears, downPayment, extraEvents, chartData, ledger, verdictSub,
+    loanEnabled, rentEnabled,
+  } = results
 
   return (
     <>
@@ -22,40 +28,52 @@ export default function Results({ results }) {
       {/* Metric grid */}
       <div className="metric-grid fade-up-2">
         <MetricCard label="XIRR (true return)" value={`${xirrPct}%`} sub="annualised, pre-tax" cls="accent" highlight />
-        <MetricCard label="Net in hand after sale" value={fmtCr(netFromSale)} sub={`after closing ${fmtL(outstandingLoan)} loan`} cls="green" />
+        <MetricCard label="Net in hand after sale" value={fmtCr(netFromSale)} sub={loanEnabled && outstandingLoan > 0 ? `after closing ${fmtL(outstandingLoan)} loan` : 'no outstanding loan'} cls="green" />
         <MetricCard label="Total cash deployed" value={fmtCr(totalCashOut)} sub="gross, before rent savings" />
-        <MetricCard label="Effective outflow" value={fmtCr(effectiveCostOut)} sub={`net of ${fmtL(totalRentSaved)} rent saved`} cls="orange" />
+        <MetricCard label="Effective outflow" value={fmtCr(effectiveCostOut)} sub={rentEnabled && totalRentSaved > 0 ? `net of ${fmtL(totalRentSaved)} rent saved` : 'rent savings excluded'} cls="orange" />
         <MetricCard label="Property simple CAGR" value={`${simpleCagr.toFixed(2)}%`} sub="on purchase price alone" />
-        <MetricCard label="Total EMIs paid" value={fmtCr(totalEmisPaid)} sub={`${emiMonthsCount} months × ${fmtINR(monthlyEmi)}`} />
-        <MetricCard label="Rent saved" value={fmtL(totalRentSaved)} sub={`${rentMonthsCount} months × ${fmtINR(monthlyRent)}`} cls="green" />
-        <MetricCard label="Outstanding loan" value={fmtL(outstandingLoan)} sub="to repay from sale" cls="red" />
+        {loanEnabled && <MetricCard label="Total EMIs paid" value={fmtCr(totalEmisPaid)} sub={`${emiMonthsCount} months × ${fmtINR(monthlyEmi)}`} />}
+        {rentEnabled && <MetricCard label="Rent saved" value={fmtL(totalRentSaved)} sub={`${rentMonthsCount} months × ${fmtINR(monthlyRent)}`} cls="green" />}
+        {loanEnabled && <MetricCard label="Outstanding loan" value={fmtL(outstandingLoan)} sub="to repay from sale" cls="red" />}
       </div>
 
       {/* Two-col summary */}
-      <div className="results-2col fade-up-3">
+      <div className={`fade-up-3${loanEnabled ? ' results-2col' : ''}`}>
         <div className="result-card">
           <div className="result-card-title">Cash outflow breakdown</div>
           <Row k="Down payment" v={`- ${fmtL(downPayment)}`} vc="red" />
-          <Row k={`EMIs (${emiMonthsCount} months full)`} v={`- ${fmtL(totalEmisPaid)}`} vc="red" />
-          <Row k={`Rent saved (${rentMonthsCount} months netted)`} v={`+ ${fmtL(totalRentSaved)}`} vc="green" />
+          {loanEnabled && <Row k={`EMIs (${emiMonthsCount} months full)`} v={`- ${fmtL(totalEmisPaid)}`} vc="red" />}
+          {rentEnabled && totalRentSaved > 0 && <Row k={`Rent saved (${rentMonthsCount} months netted)`} v={`+ ${fmtL(totalRentSaved)}`} vc="green" />}
           {extraEvents.map((e, i) => <Row key={i} k={e.label} v={`- ${fmtL(e.amount)}`} vc="red" />)}
           <Row k="Net effective cash out" v={`- ${fmtCr(effectiveCostOut)}`} vc="bold" bold />
           <Row k="Sale proceeds" v={`+ ${fmtCr(netFromSale + outstandingLoan)}`} vc="green" />
-          <Row k="Loan repaid from sale" v={`- ${fmtL(outstandingLoan)}`} vc="red" />
+          {loanEnabled && outstandingLoan > 0 && <Row k="Loan repaid from sale" v={`- ${fmtL(outstandingLoan)}`} vc="red" />}
           <Row k="Net in hand" v={`+ ${fmtCr(netFromSale)}`} vc="accent" bold />
-          <Row k="Net profit" v={`${netFromSale - effectiveCostOut >= 0 ? '+' : '-'} ${fmtCr(netFromSale - effectiveCostOut)}`} vc={netFromSale - effectiveCostOut >= 0 ? 'green' : 'red'} bold />
+          <Row k="Net profit" v={`${netFromSale - effectiveCostOut >= 0 ? '+' : '-'} ${fmtCr(Math.abs(netFromSale - effectiveCostOut))}`} vc={netFromSale - effectiveCostOut >= 0 ? 'green' : 'red'} bold />
         </div>
-        <div className="result-card">
-          <div className="result-card-title">Loan snapshot</div>
-          <Row k="Original loan" v={fmtCr(loanAmount)} />
-          <Row k="Monthly EMI" v={fmtINR(monthlyEmi)} />
-          <Row k="Principal repaid so far" v={fmtL(principalRepaid)} vc="green" />
-          <Row k="Interest paid so far" v={fmtL(totalInterestPaid)} vc="red" />
-          <Row k="Outstanding balance" v={fmtL(outstandingLoan)} vc="red" />
-          <Row k="% loan repaid" v={`${((principalRepaid / loanAmount) * 100).toFixed(1)}%`} />
-          <Row k="Holding period" v={`${holdYears} years`} />
-          <Row k="Property appreciation" v={`+ ${fmtCr(results.currentValue - results.propertyValue)}`} vc="green" />
-        </div>
+        {loanEnabled && (
+          <div className="result-card">
+            <div className="result-card-title">Loan snapshot</div>
+            <Row k="Original loan" v={fmtCr(loanAmount)} />
+            <Row k="Monthly EMI" v={fmtINR(monthlyEmi)} />
+            <Row k="Principal repaid so far" v={fmtL(principalRepaid)} vc="green" />
+            <Row k="Interest paid so far" v={fmtL(totalInterestPaid)} vc="red" />
+            <Row k="Outstanding balance" v={fmtL(outstandingLoan)} vc="red" />
+            <Row k="% loan repaid" v={`${((principalRepaid / loanAmount) * 100).toFixed(1)}%`} />
+            <Row k="Holding period" v={`${holdYears} years`} />
+            <Row k="Property appreciation" v={`+ ${fmtCr(results.currentValue - results.propertyValue)}`} vc="green" />
+          </div>
+        )}
+        {!loanEnabled && (
+          <div className="result-card">
+            <div className="result-card-title">Property snapshot</div>
+            <Row k="Holding period" v={`${holdYears} years`} />
+            <Row k="Purchase price" v={fmtCr(results.propertyValue)} />
+            <Row k="Current value" v={fmtCr(results.currentValue)} />
+            <Row k="Property appreciation" v={`+ ${fmtCr(results.currentValue - results.propertyValue)}`} vc="green" />
+            <Row k="Simple CAGR" v={`${simpleCagr.toFixed(2)}%`} />
+          </div>
+        )}
       </div>
 
       <GrowthChart chartData={chartData} />

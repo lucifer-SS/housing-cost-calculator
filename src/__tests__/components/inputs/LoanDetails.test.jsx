@@ -89,7 +89,7 @@ describe('LoanDetails — section toggle', () => {
   it('calls onToggle when the toggle button is clicked', () => {
     const onToggle = vi.fn()
     render(<LoanDetails form={emiForm} onChange={vi.fn()} computedLoan={null} enabled={true} onToggle={onToggle} />)
-    fireEvent.click(screen.getByText('included'))
+    fireEvent.click(screen.getByText('Excluded'))
     expect(onToggle).toHaveBeenCalled()
   })
 })

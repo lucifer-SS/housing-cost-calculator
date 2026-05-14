@@ -13,9 +13,14 @@ function renderAtHousing() {
   fireEvent.click(screen.getByText('House Investment'))
 }
 
-// Expand loan and rent sections (both excluded by default)
+// Click every "Included" toggle to expand sections (loan, rent, extra expenses — all excluded by default)
+function enableAllSections() {
+  screen.getAllByText('Included').forEach(btn => fireEvent.click(btn))
+}
+
+// Expand only loan and rent (for tests that don't need extra expenses)
 function enableLoanAndRent() {
-  screen.getAllByText('excluded').forEach(btn => fireEvent.click(btn))
+  enableAllSections()
 }
 
 describe('App — rendering', () => {
@@ -49,6 +54,7 @@ describe('App — rendering', () => {
 
   it('pre-fills the two default extra expense events', () => {
     renderAtHousing()
+    enableAllSections()
     expect(screen.getByDisplayValue('Registration + Legal fees')).toBeInTheDocument()
     expect(screen.getByDisplayValue('Interiors')).toBeInTheDocument()
   })
@@ -84,6 +90,7 @@ describe('App — extra expenses', () => {
   it('adds a new blank expense row when Add expense is clicked', async () => {
     const user = userEvent.setup()
     renderAtHousing()
+    enableAllSections()
     const removesBefore = screen.getAllByTitle('Remove').length
     await user.click(screen.getByText(/add expense/i))
     expect(screen.getAllByTitle('Remove')).toHaveLength(removesBefore + 1)
@@ -92,6 +99,7 @@ describe('App — extra expenses', () => {
   it('removes an expense row when its Remove button is clicked', async () => {
     const user = userEvent.setup()
     renderAtHousing()
+    enableAllSections()
     const removesBefore = screen.getAllByTitle('Remove').length
     await user.click(screen.getAllByTitle('Remove')[0])
     expect(screen.getAllByTitle('Remove')).toHaveLength(removesBefore - 1)
@@ -112,6 +120,7 @@ describe('App — calculate', () => {
   it('renders all key result sections', async () => {
     const user = userEvent.setup()
     renderAtHousing()
+    enableLoanAndRent()
     await user.click(screen.getByText('Calculate Returns'))
     await waitFor(() => expect(screen.getByText(/XIRR:/)).toBeInTheDocument())
     expect(screen.getByText('Your returns')).toBeInTheDocument()
