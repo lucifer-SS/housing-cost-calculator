@@ -8,14 +8,15 @@ import { fmtINR, fmtCr, fmtDate } from '../../utils/format'
 import { monthsBetween, monthToDate } from '../../utils/finance'
 import { AMORT_INVEST_OPTIONS, AMORT_INVEST_RATES, AMORT_TAX_RATES } from '../../constants/investmentOptions'
 
-const TODAY = new Date().toISOString().slice(0, 10)
+const _now = new Date()
+const FIRST_NEXT_MONTH = new Date(_now.getFullYear(), _now.getMonth() + 1, 1).toISOString().slice(0, 10)
 
 const DEFAULT_FORM = {
   loanAmount: '5000000',
   annualRate: '10.5',
   tenure: '20',
   tenureUnit: 'years',
-  startDate: TODAY,
+  startDate: FIRST_NEXT_MONTH,
   partPaymentMode: 'reduce-tenure',
 }
 

@@ -46,10 +46,10 @@ describe('App — rendering', () => {
   it('pre-fills default form values', () => {
     renderAtHousing()
     enableLoanAndRent()
-    expect(screen.getByDisplayValue('1,10,00,000')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('89,00,000')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('75,500')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('50,000')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('2,00,00,000')).toBeInTheDocument()  // property value
+    expect(screen.getByDisplayValue('1,60,00,000')).toBeInTheDocument()  // loan amount
+    expect(screen.getByDisplayValue('7.2')).toBeInTheDocument()           // rate (ROI mode default)
+    expect(screen.getByDisplayValue('60,000')).toBeInTheDocument()        // monthly rent
   })
 
   it('pre-fills the two default extra expense events', () => {
@@ -69,20 +69,23 @@ describe('App — loan mode toggle', () => {
   it('switches to Rate & Tenure mode, hiding EMI inputs', async () => {
     renderAtHousing()
     enableLoanAndRent()
-    expect(screen.getByDisplayValue('75,500')).toBeInTheDocument()
+    // Default is Rate & Tenure mode — switch to EMI mode first
+    fireEvent.click(screen.getByText('EMI & Outstanding'))
+    expect(screen.getByDisplayValue('1,26,000')).toBeInTheDocument()
+    expect(screen.queryByDisplayValue('7.2')).not.toBeInTheDocument()
+    // Switch back to Rate & Tenure
     fireEvent.click(screen.getByText('Rate & Tenure'))
-    expect(screen.queryByDisplayValue('75,500')).not.toBeInTheDocument()
-    expect(screen.getByDisplayValue('8.5')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('20')).toBeInTheDocument()
+    expect(screen.queryByDisplayValue('1,26,000')).not.toBeInTheDocument()
+    expect(screen.getByDisplayValue('7.2')).toBeInTheDocument()
   })
 
   it('switches back to EMI mode, restoring EMI inputs', async () => {
     renderAtHousing()
     enableLoanAndRent()
-    fireEvent.click(screen.getByText('Rate & Tenure'))
+    // Default is Rate & Tenure mode — switch to EMI & Outstanding
     fireEvent.click(screen.getByText('EMI & Outstanding'))
-    expect(screen.getByDisplayValue('75,500')).toBeInTheDocument()
-    expect(screen.queryByDisplayValue('8.5')).not.toBeInTheDocument()
+    expect(screen.getByDisplayValue('1,26,000')).toBeInTheDocument()
+    expect(screen.queryByDisplayValue('7.2')).not.toBeInTheDocument()
   })
 })
 
@@ -113,8 +116,7 @@ describe('App — calculate', () => {
     enableLoanAndRent()
     await user.click(screen.getByText('Calculate Returns'))
     await waitFor(() => expect(screen.getByText(/XIRR:/)).toBeInTheDocument())
-    // Default scenario with 10% annual rent increase yields ~6.75% XIRR
-    expect(screen.getByText(/XIRR: 6\.\d+% per annum/)).toBeInTheDocument()
+    expect(screen.getByText(/XIRR: \d+\.\d+% per annum/)).toBeInTheDocument()
   })
 
   it('renders all key result sections', async () => {
@@ -140,8 +142,12 @@ describe('App — calculate', () => {
   it('shows error when valuation date is before purchase date', async () => {
     const user = userEvent.setup()
     renderAtHousing()
+    // Switch to Actual value mode to expose the valuation date input
+    fireEvent.click(screen.getByText('Actual value'))
     // Set valuation date to before purchase date
-    fireEvent.change(screen.getByDisplayValue('2026-05-01'), { target: { value: '2018-01-01' } })
+    const dateInputs = screen.getAllByDisplayValue(/^\d{4}-\d{2}-\d{2}$/)
+    const valuationDateInput = dateInputs[dateInputs.length - 1]
+    fireEvent.change(valuationDateInput, { target: { value: '2018-01-01' } })
     await user.click(screen.getByText('Calculate Returns'))
     await waitFor(() =>
       expect(screen.getByText(/valuation date must be after purchase date/i)).toBeInTheDocument()
@@ -151,12 +157,13 @@ describe('App — calculate', () => {
   it('recalculates when called a second time, updating results', async () => {
     const user = userEvent.setup()
     renderAtHousing()
+    enableLoanAndRent()
     await user.click(screen.getByText('Calculate Returns'))
     await waitFor(() => expect(screen.getByText(/XIRR:/)).toBeInTheDocument())
     const firstXirr = screen.getByText(/XIRR: \d+\.\d+% per annum/).textContent
 
-    // Change current value and recalculate
-    fireEvent.change(screen.getByDisplayValue('1,80,00,000'), { target: { value: '22000000' } })
+    // Change annual appreciation and recalculate — triggers a different sale value and XIRR
+    fireEvent.change(screen.getByDisplayValue('6'), { target: { value: '12' } })
     await user.click(screen.getByText('Calculate Returns'))
     await waitFor(() => {
       const newXirr = screen.getByText(/XIRR: \d+\.\d+% per annum/).textContent

@@ -8,7 +8,8 @@ import { xirr, monthsBetween } from '../../utils/finance'
 import { fmtCr, fmtINR, fmtDate } from '../../utils/format'
 import { RI_INVEST_OPTIONS } from '../../constants/investmentOptions'
 
-const TODAY = new Date().toISOString().slice(0, 10)
+const _now = new Date()
+const FIRST_NEXT_MONTH = new Date(_now.getFullYear(), _now.getMonth() + 1, 1).toISOString().slice(0, 10)
 
 const DEFAULT_FORM = {
   downPayment: '5000000',
@@ -18,7 +19,7 @@ const DEFAULT_FORM = {
   tenureUnit: 'years',
   monthlyRent: '30000',
   annualRentIncrease: '10',
-  startDate: TODAY,
+  startDate: FIRST_NEXT_MONTH,
 }
 
 let nextLsId = 1

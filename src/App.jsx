@@ -11,31 +11,40 @@ import RentInvestmentPage from './components/rentinvestment/RentInvestmentPage'
 import { monthsBetween, xirr, computeLoanParams } from './utils/finance'
 import { fmtINR, fmtDate } from './utils/format'
 
+// Dates computed relative to "1st of next month from today"
+const _now = new Date()
+const _purchase = new Date(_now.getFullYear(), _now.getMonth() + 1, 1)
+const _movedIn = new Date(_purchase.getFullYear() + 2, _purchase.getMonth(), 1)
+const _valuation = new Date(_purchase.getFullYear() + 20, _purchase.getMonth(), 1)
+const _reg = new Date(_purchase.getFullYear(), _purchase.getMonth() + 1, 1)   // 1 month after purchase
+const _interior = new Date(_movedIn.getFullYear(), _movedIn.getMonth() - 3, 1) // 3 months before move-in
+const _fmt = d => d.toISOString().slice(0, 10)
+
 const DEFAULT_FORM = {
-  propertyValue: '11000000',
-  valuationMode: 'actual',
-  currentValue: '18000000',
-  annualAppreciation: '8',
-  appreciationTenure: '10',
+  propertyValue: '20000000',
+  valuationMode: 'appreciation',
+  currentValue: '20000000',
+  annualAppreciation: '6',
+  appreciationTenure: '20',
   appreciationTenureUnit: 'years',
-  purchaseDate: '2019-05-01',
-  valuationDate: '2026-05-01',
-  loanAmount: '8900000',
-  downPayment: '2100000',
-  loanMode: 'emi',
-  monthlyEmi: '75500',
-  outstandingLoan: '7263000',
-  loanRate: '8.5',
+  purchaseDate: _fmt(_purchase),
+  valuationDate: _fmt(_valuation),
+  loanAmount: '16000000',
+  downPayment: '4000000',
+  loanMode: 'roi',
+  monthlyEmi: '126000',
+  outstandingLoan: '0',
+  loanRate: '7.2',
   loanTenure: '20',
   loanTenureUnit: 'years',
-  monthlyRent: '50000',
+  monthlyRent: '60000',
   annualRentIncrease: '10',
-  movedInDate: '2022-04-01',
+  movedInDate: _fmt(_movedIn),
 }
 
 const DEFAULT_EVENTS = [
-  { id: 1, label: 'Registration + Legal fees', date: '2021-05-01', amount: '800000' },
-  { id: 2, label: 'Interiors', date: '2022-12-01', amount: '1300000' },
+  { id: 1, label: 'Registration + Legal fees', date: _fmt(_reg), amount: '800000' },
+  { id: 2, label: 'Interiors', date: _fmt(_interior), amount: '1300000' },
 ]
 
 let nextId = 3
