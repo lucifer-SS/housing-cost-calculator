@@ -7,14 +7,26 @@ vi.mock('../components/results/GrowthChart', () => ({
   default: () => <div data-testid="mock-chart" />,
 }))
 
+// App starts on the home page — navigate to House Investment before testing housing features
+function renderAtHousing() {
+  render(<App />)
+  fireEvent.click(screen.getByText('House Investment'))
+}
+
 describe('App — rendering', () => {
   it('renders the header logo', () => {
     render(<App />)
     expect(screen.getByRole('img', { name: /housing cost calculator/i })).toBeInTheDocument()
   })
 
-  it('renders all four input sections', () => {
+  it('renders home page tiles', () => {
     render(<App />)
+    expect(screen.getByText('House Investment')).toBeInTheDocument()
+    expect(screen.getByText('Loan Amortization')).toBeInTheDocument()
+  })
+
+  it('renders all four input sections', () => {
+    renderAtHousing()
     expect(screen.getByText('Property details')).toBeInTheDocument()
     expect(screen.getByText('Loan details')).toBeInTheDocument()
     expect(screen.getByText('Rent savings')).toBeInTheDocument()
@@ -22,7 +34,7 @@ describe('App — rendering', () => {
   })
 
   it('pre-fills default form values', () => {
-    render(<App />)
+    renderAtHousing()
     expect(screen.getByDisplayValue('1,10,00,000')).toBeInTheDocument()
     expect(screen.getByDisplayValue('89,00,000')).toBeInTheDocument()
     expect(screen.getByDisplayValue('75,500')).toBeInTheDocument()
@@ -30,20 +42,20 @@ describe('App — rendering', () => {
   })
 
   it('pre-fills the two default extra expense events', () => {
-    render(<App />)
+    renderAtHousing()
     expect(screen.getByDisplayValue('Registration + Legal fees')).toBeInTheDocument()
     expect(screen.getByDisplayValue('Interiors')).toBeInTheDocument()
   })
 
   it('does not show results before Calculate is clicked', () => {
-    render(<App />)
+    renderAtHousing()
     expect(screen.queryByText(/XIRR:/)).not.toBeInTheDocument()
   })
 })
 
 describe('App — loan mode toggle', () => {
   it('switches to Rate & Tenure mode, hiding EMI inputs', async () => {
-    render(<App />)
+    renderAtHousing()
     expect(screen.getByDisplayValue('75,500')).toBeInTheDocument()
     fireEvent.click(screen.getByText('Rate & Tenure'))
     expect(screen.queryByDisplayValue('75,500')).not.toBeInTheDocument()
@@ -52,7 +64,7 @@ describe('App — loan mode toggle', () => {
   })
 
   it('switches back to EMI mode, restoring EMI inputs', async () => {
-    render(<App />)
+    renderAtHousing()
     fireEvent.click(screen.getByText('Rate & Tenure'))
     fireEvent.click(screen.getByText('EMI & Outstanding'))
     expect(screen.getByDisplayValue('75,500')).toBeInTheDocument()
@@ -63,7 +75,7 @@ describe('App — loan mode toggle', () => {
 describe('App — extra expenses', () => {
   it('adds a new blank expense row when Add expense is clicked', async () => {
     const user = userEvent.setup()
-    render(<App />)
+    renderAtHousing()
     const removesBefore = screen.getAllByTitle('Remove').length
     await user.click(screen.getByText(/add expense/i))
     expect(screen.getAllByTitle('Remove')).toHaveLength(removesBefore + 1)
@@ -71,7 +83,7 @@ describe('App — extra expenses', () => {
 
   it('removes an expense row when its Remove button is clicked', async () => {
     const user = userEvent.setup()
-    render(<App />)
+    renderAtHousing()
     const removesBefore = screen.getAllByTitle('Remove').length
     await user.click(screen.getAllByTitle('Remove')[0])
     expect(screen.getAllByTitle('Remove')).toHaveLength(removesBefore - 1)
@@ -81,7 +93,7 @@ describe('App — extra expenses', () => {
 describe('App — calculate', () => {
   it('shows XIRR result after clicking Calculate with default values', async () => {
     const user = userEvent.setup()
-    render(<App />)
+    renderAtHousing()
     await user.click(screen.getByText('Calculate Returns'))
     await waitFor(() => expect(screen.getByText(/XIRR:/)).toBeInTheDocument())
     // Default scenario with 10% annual rent increase yields ~6.75% XIRR
@@ -90,7 +102,7 @@ describe('App — calculate', () => {
 
   it('renders all key result sections', async () => {
     const user = userEvent.setup()
-    render(<App />)
+    renderAtHousing()
     await user.click(screen.getByText('Calculate Returns'))
     await waitFor(() => expect(screen.getByText(/XIRR:/)).toBeInTheDocument())
     expect(screen.getByText('Your returns')).toBeInTheDocument()
@@ -102,14 +114,14 @@ describe('App — calculate', () => {
 
   it('shows Net profit row in cash outflow breakdown', async () => {
     const user = userEvent.setup()
-    render(<App />)
+    renderAtHousing()
     await user.click(screen.getByText('Calculate Returns'))
     await waitFor(() => expect(screen.getByText('Net profit')).toBeInTheDocument())
   })
 
   it('shows error when valuation date is before purchase date', async () => {
     const user = userEvent.setup()
-    render(<App />)
+    renderAtHousing()
     // Set valuation date to before purchase date
     fireEvent.change(screen.getByDisplayValue('2026-05-01'), { target: { value: '2018-01-01' } })
     await user.click(screen.getByText('Calculate Returns'))
@@ -120,7 +132,7 @@ describe('App — calculate', () => {
 
   it('recalculates when called a second time, updating results', async () => {
     const user = userEvent.setup()
-    render(<App />)
+    renderAtHousing()
     await user.click(screen.getByText('Calculate Returns'))
     await waitFor(() => expect(screen.getByText(/XIRR:/)).toBeInTheDocument())
     const firstXirr = screen.getByText(/XIRR: \d+\.\d+% per annum/).textContent
@@ -136,7 +148,7 @@ describe('App — calculate', () => {
 
   it('Rate & Tenure mode: computes and uses EMI/outstanding in the calculation', async () => {
     const user = userEvent.setup()
-    render(<App />)
+    renderAtHousing()
     fireEvent.click(screen.getByText('Rate & Tenure'))
     await user.click(screen.getByText('Calculate Returns'))
     await waitFor(() => expect(screen.getByText(/XIRR:/)).toBeInTheDocument())

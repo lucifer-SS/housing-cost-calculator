@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import Header from './components/Header'
+import HomePage from './components/HomePage'
 import PropertyDetails from './components/inputs/PropertyDetails'
 import LoanDetails from './components/inputs/LoanDetails'
 import RentSavings from './components/inputs/RentSavings'
@@ -36,7 +37,7 @@ const DEFAULT_EVENTS = [
 let nextId = 3
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('housing')
+  const [activeTab, setActiveTab] = useState('home')
   const [form, setForm] = useState(DEFAULT_FORM)
   const [events, setEvents] = useState(DEFAULT_EVENTS)
   const [results, setResults] = useState(null)
@@ -236,21 +237,26 @@ export default function App() {
 
   return (
     <div className="page">
-      <Header />
-      <nav className="tab-nav">
-        <button
-          className={`tab-btn${activeTab === 'housing' ? ' active' : ''}`}
-          onClick={() => setActiveTab('housing')}
-        >
-          House Investment
-        </button>
-        <button
-          className={`tab-btn${activeTab === 'amortization' ? ' active' : ''}`}
-          onClick={() => setActiveTab('amortization')}
-        >
-          Loan Amortization
-        </button>
-      </nav>
+      <Header onHome={activeTab !== 'home' ? () => setActiveTab('home') : undefined} />
+
+      {activeTab === 'home' && <HomePage onNavigate={setActiveTab} />}
+
+      {activeTab !== 'home' && (
+        <nav className="tab-nav">
+          <button
+            className={`tab-btn${activeTab === 'housing' ? ' active' : ''}`}
+            onClick={() => setActiveTab('housing')}
+          >
+            House Investment
+          </button>
+          <button
+            className={`tab-btn${activeTab === 'amortization' ? ' active' : ''}`}
+            onClick={() => setActiveTab('amortization')}
+          >
+            Loan Amortization
+          </button>
+        </nav>
+      )}
 
       {activeTab === 'housing' && (
         <>
