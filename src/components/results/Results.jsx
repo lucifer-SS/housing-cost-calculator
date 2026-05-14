@@ -1,5 +1,6 @@
 import { fmtL, fmtCr, fmtINR, fmtDate } from '../../utils/format'
 import GrowthChart from './GrowthChart'
+import MetricCard from '../shared/MetricCard'
 
 export default function Results({ results }) {
   if (!results) return null
@@ -113,15 +114,6 @@ export default function Results({ results }) {
   )
 }
 
-function MetricCard({ label, value, sub, cls, highlight }) {
-  return (
-    <div className={`metric-card${highlight ? ' highlight' : ''}`}>
-      <div className="metric-label">{label}</div>
-      <div className={`metric-value${cls ? ' ' + cls : ''}`}>{value}</div>
-      {sub && <div className="metric-sub">{sub}</div>}
-    </div>
-  )
-}
 
 function Row({ k, v, vc, bold }) {
   return (

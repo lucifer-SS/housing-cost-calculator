@@ -1,9 +1,12 @@
 import { useState, useMemo } from 'react'
 import CurrencyInput from '../shared/CurrencyInput'
+import MetricCard from '../shared/MetricCard'
+import TenureInput from '../shared/TenureInput'
 import RentInvestmentChart from './RentInvestmentChart'
 import { buildRentInvestSchedule, getInvestRate } from '../../utils/rentInvestment'
 import { xirr, monthsBetween } from '../../utils/finance'
 import { fmtCr, fmtINR, fmtDate } from '../../utils/format'
+import { RI_INVEST_OPTIONS } from '../../constants/investmentOptions'
 
 const TODAY = new Date().toISOString().slice(0, 10)
 
@@ -80,15 +83,11 @@ export default function RentInvestmentPage() {
         startDate, investRate, additionalLumpsums,
       })
 
-      // XIRR cash flows:
-      // Outflows: down payment at 0, net -estEmi each month, additional lump sums at their months
-      // Inflow: final corpus at last month
       const baseDate = startDate || new Date()
       const actualMonths = res.depleted ? res.depletedAt : tenureMonths
       const cfVals = [-downPayment]
       const cfDates = [new Date(baseDate)]
 
-      // Build per-month outflow map (EMI + any lump sums on same month)
       const lsByMonth = {}
       additionalLumpsums.forEach(ls => {
         lsByMonth[ls.month] = (lsByMonth[ls.month] || 0) + ls.amount
@@ -98,7 +97,7 @@ export default function RentInvestmentPage() {
         const d = new Date(baseDate)
         d.setMonth(d.getMonth() + m)
         const cf = m === actualMonths
-          ? (res.finalCorpus - estEmi - (lsByMonth[m] || 0))   // net last month
+          ? (res.finalCorpus - estEmi - (lsByMonth[m] || 0))
           : (-estEmi - (lsByMonth[m] || 0))
         cfVals.push(cf)
         cfDates.push(d)
@@ -172,9 +171,9 @@ export default function RentInvestmentPage() {
           <div className="field">
             <label>Investment Option</label>
             <select className="amort-select" value={form.investType} onChange={e => setField('investType', e.target.value)}>
-              <option value="fd-7">Invest @ 7% (FD)</option>
-              <option value="debt-9">Invest @ 9% (Debt)</option>
-              <option value="equity-12">Invest @ 12% (Equity)</option>
+              {RI_INVEST_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
             </select>
           </div>
         </div>
@@ -193,19 +192,12 @@ export default function RentInvestmentPage() {
           </div>
           <div className="field">
             <label>Tenure</label>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <div className="input-wrap" style={{ flex: 1 }}>
-                <input
-                  type="number"
-                  value={form.tenure}
-                  onChange={e => setField('tenure', e.target.value)}
-                  placeholder={form.tenureUnit === 'years' ? '20' : '240'}
-                  min="1"
-                />
-              </div>
-              <button className={`mode-btn${form.tenureUnit === 'years' ? ' active' : ''}`} style={{ padding: '7px 12px' }} onClick={() => setField('tenureUnit', 'years')}>Yrs</button>
-              <button className={`mode-btn${form.tenureUnit === 'months' ? ' active' : ''}`} style={{ padding: '7px 12px' }} onClick={() => setField('tenureUnit', 'months')}>Mo</button>
-            </div>
+            <TenureInput
+              value={form.tenure}
+              unit={form.tenureUnit}
+              onChange={v => setField('tenure', v)}
+              onUnitChange={u => setField('tenureUnit', u)}
+            />
           </div>
           <div className="field">
             <label>
@@ -281,9 +273,9 @@ export default function RentInvestmentPage() {
                 <div className="field">
                   <label>Option</label>
                   <select className="amort-select" value={ls.investType} onChange={e => updateLumpsum(ls.id, 'investType', e.target.value)}>
-                    <option value="fd-7">Invest @ 7% (FD)</option>
-                    <option value="debt-9">Invest @ 9% (Debt)</option>
-                    <option value="equity-12">Invest @ 12% (Equity)</option>
+                    {RI_INVEST_OPTIONS.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
                   </select>
                 </div>
                 <div className="field">
@@ -323,70 +315,69 @@ export default function RentInvestmentPage() {
             </div>
           )}
 
-          {/* ── Summary metrics ── */}
+          {/* ── Summary metrics — row 1 ── */}
           <div className="metric-grid fade-up">
-            <div className="metric-card highlight">
-              <div className="metric-label">{netSipStart >= 0 ? 'Starting Monthly SIP' : 'Starting Monthly SWP'}</div>
-              <div className="metric-value accent">{fmtINR(Math.abs(results.estEmi - results.monthlyRent))}</div>
-              <div className="metric-sub">{netSipStart >= 0 ? 'EMI surplus invested monthly' : 'corpus funds rent shortfall'}</div>
-            </div>
-            <div className="metric-card">
-              <div className="metric-label">Final Corpus</div>
-              <div className={`metric-value${results.finalCorpus > results.totalInvested ? ' green' : ' red'}`}>
-                {fmtCr(results.finalCorpus)}
-              </div>
-              <div className="metric-sub">
-                {results.depleted ? 'corpus depleted' : `after ${results.tenureMonths} months`}
-              </div>
-            </div>
-            <div className="metric-card">
-              <div className="metric-label">Total Invested</div>
-              <div className="metric-value">{fmtCr(results.totalInvested)}</div>
-              <div className="metric-sub">
-                DP + SIPs{results.totalLumpsumInvested > 0 ? ` + ${fmtCr(results.totalLumpsumInvested)} lump sums` : ''}
-              </div>
-            </div>
-            <div className="metric-card highlight">
-              <div className="metric-label">XIRR</div>
-              <div className={`metric-value${results.xirrPct === null ? ' red' : results.xirrPct >= 8 ? ' accent' : results.xirrPct >= 0 ? ' orange' : ' red'}`}>
-                {results.xirrPct === null ? '—' : `${results.xirrPct.toFixed(2)}%`}
-              </div>
-              <div className="metric-sub">annualised return on all outflows</div>
-            </div>
+            <MetricCard
+              label={netSipStart >= 0 ? 'Starting Monthly SIP' : 'Starting Monthly SWP'}
+              value={fmtINR(Math.abs(results.estEmi - results.monthlyRent))}
+              sub={netSipStart >= 0 ? 'EMI surplus invested monthly' : 'corpus funds rent shortfall'}
+              cls="accent"
+              highlight
+            />
+            <MetricCard
+              label="Final Corpus"
+              value={fmtCr(results.finalCorpus)}
+              sub={results.depleted ? 'corpus depleted' : `after ${results.tenureMonths} months`}
+              cls={results.finalCorpus > results.totalInvested ? 'green' : 'red'}
+            />
+            <MetricCard
+              label="Total Invested"
+              value={fmtCr(results.totalInvested)}
+              sub={`DP + SIPs${results.totalLumpsumInvested > 0 ? ` + ${fmtCr(results.totalLumpsumInvested)} lump sums` : ''}`}
+            />
+            <MetricCard
+              label="XIRR"
+              value={results.xirrPct === null ? '—' : `${results.xirrPct.toFixed(2)}%`}
+              sub="annualised return on all outflows"
+              cls={results.xirrPct === null ? 'red' : results.xirrPct >= 8 ? 'accent' : results.xirrPct >= 0 ? 'orange' : 'red'}
+              highlight
+            />
           </div>
 
-          {/* ── Second row: rent & profit summary ── */}
+          {/* ── Summary metrics — row 2 ── */}
           <div className="metric-grid fade-up" style={{ marginTop: '12px' }}>
-            <div className="metric-card">
-              <div className="metric-label">Total Rent Paid</div>
-              <div className="metric-value" style={{ color: 'var(--red)' }}>{fmtCr(results.totalRentPaid)}</div>
-              <div className="metric-sub">money paid to landlord</div>
-            </div>
-            <div className="metric-card">
-              <div className="metric-label">Total SIP In</div>
-              <div className="metric-value" style={{ color: 'var(--accent2)' }}>{fmtCr(results.totalSipIn)}</div>
-              <div className="metric-sub">EMI surplus invested</div>
-            </div>
+            <MetricCard
+              label="Total Rent Paid"
+              value={fmtCr(results.totalRentPaid)}
+              sub="money paid to landlord"
+              valueStyle={{ color: 'var(--red)' }}
+            />
+            <MetricCard
+              label="Total SIP In"
+              value={fmtCr(results.totalSipIn)}
+              sub="EMI surplus invested"
+              valueStyle={{ color: 'var(--accent2)' }}
+            />
             {hasSwp ? (
-              <div className="metric-card">
-                <div className="metric-label">Total SWP Out</div>
-                <div className="metric-value orange">{fmtCr(results.totalSwpOut)}</div>
-                <div className="metric-sub">corpus drawn to cover rent</div>
-              </div>
+              <MetricCard
+                label="Total SWP Out"
+                value={fmtCr(results.totalSwpOut)}
+                sub="corpus drawn to cover rent"
+                cls="orange"
+              />
             ) : (
-              <div className="metric-card">
-                <div className="metric-label">Total Money Out</div>
-                <div className="metric-value">{fmtCr(results.totalMoneyOut)}</div>
-                <div className="metric-sub">rent + DP + lump sums</div>
-              </div>
+              <MetricCard
+                label="Total Money Out"
+                value={fmtCr(results.totalMoneyOut)}
+                sub="rent + DP + lump sums"
+              />
             )}
-            <div className="metric-card">
-              <div className="metric-label">Profit / Loss</div>
-              <div className={`metric-value${results.finalCorpus - results.downPayment >= 0 ? ' green' : ' red'}`}>
-                {fmtCr(Math.abs(results.finalCorpus - results.downPayment))}
-              </div>
-              <div className="metric-sub">{results.finalCorpus >= results.downPayment ? 'gain on lump sum invested' : 'loss on lump sum invested'}</div>
-            </div>
+            <MetricCard
+              label="Profit / Loss"
+              value={fmtCr(Math.abs(results.finalCorpus - results.downPayment))}
+              sub={results.finalCorpus >= results.downPayment ? 'gain on lump sum invested' : 'loss on lump sum invested'}
+              cls={results.finalCorpus - results.downPayment >= 0 ? 'green' : 'red'}
+            />
           </div>
 
           {/* ── Chart ── */}
