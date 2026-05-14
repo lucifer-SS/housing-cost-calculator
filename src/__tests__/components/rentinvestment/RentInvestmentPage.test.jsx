@@ -133,11 +133,13 @@ describe('RentInvestmentPage — validation', () => {
   it('requires start date when a lump sum with a date is added', async () => {
     const user = userEvent.setup()
     render(<RentInvestmentPage />)
+    // Clear the pre-filled start date so validation triggers
+    const startDateInput = screen.getByDisplayValue(/^\d{4}-\d{2}-\d{2}$/)
+    fireEvent.change(startDateInput, { target: { value: '' } })
     await user.click(screen.getByText('+ Add Lump Sum'))
-    // Fill date and amount on the lump sum row without setting start date
-    // dateInputs[0] is the start date field; dateInputs[1] is the lump sum date field
-    const dateInputs = screen.getAllByDisplayValue('')
-    fireEvent.change(dateInputs[1], { target: { value: '2026-06-01' } })
+    // Now the only empty date input is the lump sum date
+    const lsDateInput = screen.getAllByDisplayValue('').find(el => el.type === 'date' && el !== startDateInput)
+    fireEvent.change(lsDateInput, { target: { value: '2026-06-01' } })
     const amtInputs = screen.getAllByRole('textbox').filter(el => el.placeholder === '1,00,000')
     if (amtInputs.length > 0) fireEvent.change(amtInputs[0], { target: { value: '100000' } })
     await user.click(screen.getByText('Calculate Wealth Growth'))

@@ -5,12 +5,14 @@ import { buildSchedule, calcEmi } from '../../utils/amortization'
 import { fmtINR, fmtCr, fmtDate } from '../../utils/format'
 import { monthsBetween } from '../../utils/finance'
 
+const TODAY = new Date().toISOString().slice(0, 10)
+
 const DEFAULT_FORM = {
   loanAmount: '5000000',
   annualRate: '10.5',
   tenure: '20',
   tenureUnit: 'years',
-  startDate: '',
+  startDate: TODAY,
   partPaymentMode: 'reduce-tenure',
 }
 

@@ -5,6 +5,8 @@ import { buildRentInvestSchedule, getInvestRate } from '../../utils/rentInvestme
 import { xirr, monthsBetween } from '../../utils/finance'
 import { fmtCr, fmtINR, fmtDate } from '../../utils/format'
 
+const TODAY = new Date().toISOString().slice(0, 10)
+
 const DEFAULT_FORM = {
   downPayment: '5000000',
   investType: 'equity-12',
@@ -13,7 +15,7 @@ const DEFAULT_FORM = {
   tenureUnit: 'years',
   monthlyRent: '30000',
   annualRentIncrease: '10',
-  startDate: '',
+  startDate: TODAY,
 }
 
 let nextLsId = 1
