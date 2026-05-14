@@ -442,13 +442,13 @@ export default function AmortizationPage() {
                 label="Net Interest"
                 value={results.hasInvestments ? fmtCr(results.netInterest) : '—'}
                 sub={results.hasInvestments ? 'interest − returns + tax' : ''}
-                valueStyle={{ color: results.hasInvestments ? (results.totalInvestmentProfit > 0 ? 'var(--accent2)' : 'var(--accent3)') : 'var(--text3)' }}
+                valueStyle={{ color: results.hasInvestments ? (results.effectiveRate < 0 ? 'var(--accent2)' : 'var(--accent3)') : 'var(--text3)' }}
               />
               <MetricCard
                 label="Effective Rate"
                 value={`${results.effectiveRate.toFixed(2)}%`}
                 sub="implied rate on net interest paid"
-                valueStyle={{ color: 'var(--accent3)' }}
+                valueStyle={{ color: results.effectiveRate < 0 ? 'var(--accent2)' : 'var(--accent3)' }}
               />
             </div>
           )}
