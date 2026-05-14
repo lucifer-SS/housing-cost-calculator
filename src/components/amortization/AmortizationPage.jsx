@@ -142,7 +142,7 @@ export default function AmortizationPage() {
       const totalInvestedAmount = investments.reduce((s, inv) => s + inv.amount, 0)
       const totalInvestmentProfit = investments.reduce((s, inv) => s + inv.profit, 0)
       const totalTax = investments.reduce((s, inv) => s + inv.tax, 0)
-      const netInterest = res.totalInterest - (totalInvestmentProfit + totalTax)
+      const netInterest = res.totalInterest - totalInvestmentProfit + totalTax
       // Implied rate: what reducing-balance rate would produce netInterest on the same principal/tenure
       const effectiveEmi = (netInterest + principal) / tenureMonths
       let er = (2 * netInterest) / (principal * (tenureMonths + 1)) // simple-interest approximation as seed
