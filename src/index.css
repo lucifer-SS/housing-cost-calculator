@@ -406,6 +406,7 @@
     header { flex-direction: column; align-items: flex-start; }
     .header-left h1 { font-size: 28px; }
     .computed-box { gap: 16px; }
+    .tab-btn { padding: 10px 14px; font-size: 13px; }
   }
 
   @media (max-width: 480px) {
@@ -459,6 +460,141 @@
   .computed-val { font-family: var(--font-mono); font-size: 17px; color: var(--accent2); font-weight: 500; }
   .computed-sub { font-size: 11px; color: var(--text3); }
 
+  /* ── Section toggle pill ── */
+  .section-toggle {
+    background: none;
+    border: 1px solid var(--border2);
+    border-radius: 999px;
+    padding: 2px 10px;
+    font-size: 10px;
+    font-family: var(--font-body);
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    transition: all 0.18s;
+    flex-shrink: 0;
+  }
+  .section-toggle.on  { color: var(--accent2); border-color: rgba(125,214,168,0.35); }
+  .section-toggle.off { color: var(--text3);   border-color: var(--border); }
+  .section-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+  .section-off-note {
+    font-size: 12px;
+    color: var(--text3);
+    font-style: italic;
+    margin-bottom: 4px;
+  }
+
+  /* ── Tab navigation ── */
+  .tab-nav {
+    display: flex;
+    gap: 0;
+    margin-bottom: 36px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tab-btn {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text2);
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 500;
+    padding: 10px 22px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: -1px;
+    letter-spacing: 0.01em;
+  }
+  .tab-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+  .tab-btn:not(.active):hover { color: var(--text); }
+
+  /* ── Amortization table ── */
+  .amort-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    min-width: 640px;
+  }
+  .amort-table th {
+    text-align: left;
+    padding: 8px 12px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text3);
+    border-bottom: 1px solid var(--border);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .amort-table th.num { text-align: right; }
+  .amort-table th.interest { color: var(--accent3); }
+  .amort-table th.principal { color: var(--accent2); }
+  .amort-table th.accent-col { color: var(--accent); }
+  .amort-table td {
+    padding: 7px 12px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text2);
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+  .amort-table td.num {
+    text-align: right;
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+  .amort-table td.interest { color: var(--accent3); }
+  .amort-table td.principal { color: var(--accent2); }
+  .amort-table tr:last-child td { border-bottom: none; }
+  .amort-table tr.has-pp { background: rgba(200,240,100,0.03); }
+  .amort-table tfoot td {
+    border-top: 1px solid var(--border2);
+    border-bottom: none;
+    padding-top: 10px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+  .amort-table tfoot td.num { text-align: right; }
+  .amort-table tfoot td.interest { color: var(--accent3); }
+  .amort-table tfoot td.principal { color: var(--accent2); }
+
+  /* ── Amortization-specific inputs ── */
+  .amort-select {
+    height: 42px;
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 13px;
+    padding: 0 12px;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .amort-select:focus { border-color: var(--accent); }
+
+  .amort-text-input {
+    height: 42px;
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 13px;
+    padding: 0 12px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .amort-text-input:focus { border-color: var(--accent); }
+
+  /* ── Info tip ── */
   .info-tip {
     display: inline-flex; align-items: center; justify-content: center;
     width: 14px; height: 14px; border-radius: 50%;

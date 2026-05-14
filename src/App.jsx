@@ -5,6 +5,7 @@ import LoanDetails from './components/inputs/LoanDetails'
 import RentSavings from './components/inputs/RentSavings'
 import ExtraExpenses from './components/inputs/ExtraExpenses'
 import Results from './components/results/Results'
+import AmortizationPage from './components/amortization/AmortizationPage'
 import { monthsBetween, xirr, computeLoanParams } from './utils/finance'
 import { fmtINR, fmtDate } from './utils/format'
 
@@ -35,10 +36,13 @@ const DEFAULT_EVENTS = [
 let nextId = 3
 
 export default function App() {
+  const [activeTab, setActiveTab] = useState('housing')
   const [form, setForm] = useState(DEFAULT_FORM)
   const [events, setEvents] = useState(DEFAULT_EVENTS)
   const [results, setResults] = useState(null)
   const [error, setError] = useState('')
+  const [loanEnabled, setLoanEnabled] = useState(true)
+  const [rentEnabled, setRentEnabled] = useState(true)
 
   const computedLoan = useMemo(() => computeLoanParams(form), [
     form.loanMode, form.loanAmount, form.loanRate, form.loanTenure,
@@ -79,33 +83,40 @@ export default function App() {
       const purchaseDate = new Date(form.purchaseDate)
       const valuationDate = new Date(form.valuationDate)
       const movedInDate = new Date(form.movedInDate)
-      const downPayment = parseFloat(form.downPayment) || 0
-      const monthlyRent = parseFloat(form.monthlyRent) || 0
-      const annualRentIncrease = parseFloat(form.annualRentIncrease) || 0
+      const monthlyRent = rentEnabled ? (parseFloat(form.monthlyRent) || 0) : 0
+      const annualRentIncrease = rentEnabled ? (parseFloat(form.annualRentIncrease) || 0) : 0
       const propertyValue = parseFloat(form.propertyValue) || 0
-      const loanAmount = parseFloat(form.loanAmount) || 0
       const totalMonths = monthsBetween(purchaseDate, valuationDate)
       if (totalMonths <= 0) throw new Error('Valuation date must be after purchase date.')
       const currentValue = form.valuationMode === 'appreciation'
         ? Math.round(propertyValue * Math.pow(1 + (parseFloat(form.annualAppreciation) || 0) / 100, totalMonths / 12))
         : parseFloat(form.currentValue) || 0
 
-      let monthlyEmi, outstandingLoan
-      if (form.loanMode === 'roi') {
-        const rAnnual = parseFloat(form.loanRate) || 0
-        const n = parseInt(form.loanTenure) || 0
-        if (rAnnual <= 0 || n <= 0) throw new Error('Please enter a valid interest rate and tenure.')
-        const r = rAnnual / 1200
-        const fn = Math.pow(1 + r, n)
-        monthlyEmi = loanAmount * r * fn / (fn - 1)
-        const fm = Math.pow(1 + r, totalMonths)
-        outstandingLoan = Math.max(0, loanAmount * fm - monthlyEmi * (fm - 1) / r)
+      // Resolve loan figures based on toggle
+      let downPayment, monthlyEmi, outstandingLoan, loanAmount
+      if (!loanEnabled) {
+        downPayment = propertyValue
+        monthlyEmi = 0
+        outstandingLoan = 0
+        loanAmount = 0
       } else {
-        monthlyEmi = parseFloat(form.monthlyEmi) || 0
-        outstandingLoan = parseFloat(form.outstandingLoan) || 0
+        downPayment = parseFloat(form.downPayment) || 0
+        loanAmount = parseFloat(form.loanAmount) || 0
+        if (form.loanMode === 'roi') {
+          const rAnnual = parseFloat(form.loanRate) || 0
+          const n = parseInt(form.loanTenure) || 0
+          if (rAnnual <= 0 || n <= 0) throw new Error('Please enter a valid interest rate and tenure.')
+          const r = rAnnual / 1200
+          const fn = Math.pow(1 + r, n)
+          monthlyEmi = loanAmount * r * fn / (fn - 1)
+          const fm = Math.pow(1 + r, totalMonths)
+          outstandingLoan = Math.max(0, loanAmount * fm - monthlyEmi * (fm - 1) / r)
+        } else {
+          monthlyEmi = parseFloat(form.monthlyEmi) || 0
+          outstandingLoan = parseFloat(form.outstandingLoan) || 0
+        }
+        if (monthlyEmi <= 0) throw new Error('Please fill in all required loan fields.')
       }
-
-      if (monthlyEmi <= 0) throw new Error('Please fill in all required fields.')
 
       const emiStartDate = new Date(purchaseDate)
       emiStartDate.setMonth(emiStartDate.getMonth() + 1)
@@ -119,20 +130,22 @@ export default function App() {
       const cfVals = [-downPayment], cfDates = [new Date(purchaseDate)]
       let totalEmisPaid = 0, totalRentSaved = 0
 
-      for (let m = 0; m < totalMonths; m++) {
-        const d = new Date(emiStartDate)
-        d.setMonth(d.getMonth() + m)
-        if (d >= valuationDate) break
-        if (d >= movedInDate) {
-          const yearsElapsed = Math.floor(monthsBetween(movedInDate, d) / 12)
-          const effectiveRent = monthlyRent * Math.pow(1 + annualRentIncrease / 100, yearsElapsed)
-          cfVals.push(-(monthlyEmi - effectiveRent))
-          totalRentSaved += effectiveRent
-        } else {
-          cfVals.push(-monthlyEmi)
+      if (loanEnabled && monthlyEmi > 0) {
+        for (let m = 0; m < totalMonths; m++) {
+          const d = new Date(emiStartDate)
+          d.setMonth(d.getMonth() + m)
+          if (d >= valuationDate) break
+          if (rentEnabled && d >= movedInDate) {
+            const yearsElapsed = Math.floor(monthsBetween(movedInDate, d) / 12)
+            const effectiveRent = monthlyRent * Math.pow(1 + annualRentIncrease / 100, yearsElapsed)
+            cfVals.push(-(monthlyEmi - effectiveRent))
+            totalRentSaved += effectiveRent
+          } else {
+            cfVals.push(-monthlyEmi)
+          }
+          cfDates.push(new Date(d))
+          totalEmisPaid += monthlyEmi
         }
-        cfDates.push(new Date(d))
-        totalEmisPaid += monthlyEmi
       }
       const emiMonthsCount = cfVals.length - 1
       validEvents.forEach(e => { cfVals.push(-e.amount); cfDates.push(new Date(e.date)) })
@@ -146,9 +159,9 @@ export default function App() {
       const effectiveCostOut = downPayment + netEmiOut + totalExtraCost
       const holdYears = (totalMonths / 12).toFixed(1)
       const simpleCagr = (Math.pow(currentValue / propertyValue, 1 / (totalMonths / 12)) - 1) * 100
-      const rentMonthsCount = monthsBetween(movedInDate, valuationDate)
-      const principalRepaid = loanAmount - outstandingLoan
-      const totalInterestPaid = totalEmisPaid - principalRepaid
+      const rentMonthsCount = rentEnabled ? monthsBetween(movedInDate, valuationDate) : 0
+      const principalRepaid = loanEnabled ? loanAmount - outstandingLoan : 0
+      const totalInterestPaid = loanEnabled ? totalEmisPaid - principalRepaid : 0
 
       // Chart data
       const chartLabels = [], cumOutflow = [], propValue = []
@@ -156,11 +169,11 @@ export default function App() {
       for (let m = 0; m <= totalMonths; m++) {
         const d = new Date(purchaseDate)
         d.setMonth(d.getMonth() + m)
-        if (m > 0) {
+        if (m > 0 && loanEnabled && monthlyEmi > 0) {
           const emiD = new Date(emiStartDate)
           emiD.setMonth(emiD.getMonth() + m - 1)
           if (emiD < valuationDate) {
-            if (emiD >= movedInDate) {
+            if (rentEnabled && emiD >= movedInDate) {
               const yearsElapsed = Math.floor(monthsBetween(movedInDate, emiD) / 12)
               const effectiveRent = monthlyRent * Math.pow(1 + annualRentIncrease / 100, yearsElapsed)
               runningOut += monthlyEmi - effectiveRent
@@ -181,14 +194,24 @@ export default function App() {
 
       // Ledger
       const ledger = [
-        { date: fmtDate(purchaseDate), desc: 'Down payment', type: 'out', amount: downPayment },
+        { date: fmtDate(purchaseDate), desc: loanEnabled ? 'Down payment' : 'Full purchase (cash)', type: 'out', amount: downPayment },
         ...validEvents.map(e => ({ date: fmtDate(e.date), desc: e.label, type: 'out', amount: e.amount })),
-        { date: `${fmtDate(emiStartDate)} – ${fmtDate(valuationDate)}`, desc: `EMIs (${emiMonthsCount} months × ${fmtINR(monthlyEmi)})`, type: 'out', amount: totalEmisPaid },
-        { date: `${fmtDate(movedInDate)} – ${fmtDate(valuationDate)}`, desc: `Rent saved (${rentMonthsCount} months, base ${fmtINR(monthlyRent)}${annualRentIncrease > 0 ? ` +${annualRentIncrease}%/yr` : ''}) — netted`, type: 'in', amount: totalRentSaved },
+        ...(loanEnabled && emiMonthsCount > 0 ? [
+          { date: `${fmtDate(emiStartDate)} – ${fmtDate(valuationDate)}`, desc: `EMIs (${emiMonthsCount} months × ${fmtINR(monthlyEmi)})`, type: 'out', amount: totalEmisPaid },
+        ] : []),
+        ...(rentEnabled && totalRentSaved > 0 ? [
+          { date: `${fmtDate(movedInDate)} – ${fmtDate(valuationDate)}`, desc: `Rent saved (${rentMonthsCount} months, base ${fmtINR(monthlyRent)}${annualRentIncrease > 0 ? ` +${annualRentIncrease}%/yr` : ''}) — netted`, type: 'in', amount: totalRentSaved },
+        ] : []),
         { date: fmtDate(valuationDate), desc: 'Sale proceeds', type: 'in', amount: currentValue },
-        { date: fmtDate(valuationDate), desc: 'Loan balance repaid', type: 'out', amount: outstandingLoan },
+        ...(loanEnabled && outstandingLoan > 0 ? [
+          { date: fmtDate(valuationDate), desc: 'Loan balance repaid', type: 'out', amount: outstandingLoan },
+        ] : []),
         { date: fmtDate(valuationDate), desc: 'Net in hand', type: 'net', amount: netFromSale },
       ]
+
+      const rentDesc = rentEnabled
+        ? `₹${(totalRentSaved / 100000).toFixed(1)}L rent savings netted in${annualRentIncrease > 0 ? ` (rent growing ${annualRentIncrease}%/yr)` : ''}`
+        : 'rent savings excluded'
 
       setResults({
         xirrPct, netFromSale, totalCashOut, effectiveCostOut, simpleCagr,
@@ -197,7 +220,8 @@ export default function App() {
         holdYears, downPayment, extraEvents: validEvents, currentValue, propertyValue,
         chartData: { labels: chartLabels, cumOutflow, propValue },
         ledger,
-        verdictSub: `True annualised return on your investment over ${holdYears} years, with every EMI dated month-by-month and ₹${(totalRentSaved / 100000).toFixed(1)}L rent savings netted in${annualRentIncrease > 0 ? ` (rent growing ${annualRentIncrease}%/yr)` : ''}.`,
+        loanEnabled, rentEnabled,
+        verdictSub: `True annualised return on your investment over ${holdYears} years${loanEnabled && emiMonthsCount > 0 ? ', with every EMI dated month-by-month' : ''} and ${rentDesc}.`,
         purchaseDate, valuationDate, emiStartDate, movedInDate,
       })
 
@@ -213,13 +237,34 @@ export default function App() {
   return (
     <div className="page">
       <Header />
-      <PropertyDetails form={form} onChange={setField} computedValuation={computedValuation} />
-      <LoanDetails form={form} onChange={setField} computedLoan={computedLoan} />
-      <RentSavings form={form} onChange={setField} />
-      <ExtraExpenses events={events} onAdd={addEvent} onRemove={removeEvent} onChange={updateEvent} />
-      <button className="calc-btn" onClick={calculate}>Calculate Returns</button>
-      {error && <div className="error-msg" style={{ display: 'block' }}>{error}</div>}
-      {results && <div id="results-section"><Results results={results} /></div>}
+      <nav className="tab-nav">
+        <button
+          className={`tab-btn${activeTab === 'housing' ? ' active' : ''}`}
+          onClick={() => setActiveTab('housing')}
+        >
+          House Investment
+        </button>
+        <button
+          className={`tab-btn${activeTab === 'amortization' ? ' active' : ''}`}
+          onClick={() => setActiveTab('amortization')}
+        >
+          Loan Amortization
+        </button>
+      </nav>
+
+      {activeTab === 'housing' && (
+        <>
+          <PropertyDetails form={form} onChange={setField} computedValuation={computedValuation} />
+          <LoanDetails form={form} onChange={setField} computedLoan={computedLoan} enabled={loanEnabled} onToggle={() => setLoanEnabled(v => !v)} />
+          <RentSavings form={form} onChange={setField} enabled={rentEnabled} onToggle={() => setRentEnabled(v => !v)} />
+          <ExtraExpenses events={events} onAdd={addEvent} onRemove={removeEvent} onChange={updateEvent} />
+          <button className="calc-btn" onClick={calculate}>Calculate Returns</button>
+          {error && <div className="error-msg" style={{ display: 'block' }}>{error}</div>}
+          {results && <div id="results-section"><Results results={results} /></div>}
+        </>
+      )}
+
+      {activeTab === 'amortization' && <AmortizationPage />}
     </div>
   )
 }
