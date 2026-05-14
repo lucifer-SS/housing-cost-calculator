@@ -140,7 +140,7 @@ export default function AmortizationPage() {
       const totalInvestedAmount = investments.reduce((s, inv) => s + inv.amount, 0)
       const totalInvestmentProfit = investments.reduce((s, inv) => s + inv.profit, 0)
       const totalTax = investments.reduce((s, inv) => s + inv.tax, 0)
-      const netInterest = res.totalInterest - totalInvestmentProfit + totalTax
+      const netInterest = res.totalInterest - (totalInvestmentProfit + totalTax)
       // Implied rate: what reducing-balance rate would produce netInterest on the same principal/tenure
       const effectiveEmi = (netInterest + principal) / tenureMonths
       let er = (2 * netInterest) / (principal * (tenureMonths + 1)) // simple-interest approximation as seed
@@ -300,7 +300,7 @@ export default function AmortizationPage() {
         {rateChanges.length > 0 && (
           <div className="events-list" style={{ marginBottom: '12px' }}>
             {rateChanges.map(rc => (
-              <div key={rc.id} className="event-row" style={{ gridTemplateColumns: '1fr 1fr auto', alignItems: 'end' }}>
+              <div key={rc.id} className="event-row">
                 <div className="field">
                   <label>Effective From</label>
                   <div>
@@ -346,7 +346,7 @@ export default function AmortizationPage() {
             {partPayments.map(pp => {
               const invest = pp.type.startsWith('invest-')
               return (
-                <div key={pp.id} className="event-row" style={{ gridTemplateColumns: '1fr 1fr 160px 1fr auto', alignItems: 'end' }}>
+                <div key={pp.id} className="event-row event-row--pp">
                   <div className="field">
                     <label>{invest ? 'Investment Date' : 'Date'}</label>
                     <input
@@ -409,7 +409,7 @@ export default function AmortizationPage() {
           <hr className="results-divider" />
 
           {/* Summary metrics — row 1 */}
-          <div className="metric-grid fade-up" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+          <div className="metric-grid fade-up">
             <div className="metric-card highlight">
               <div className="metric-label">Monthly EMI</div>
               <div className="metric-value accent">{fmtINR(results.originalEmi)}</div>
@@ -451,7 +451,7 @@ export default function AmortizationPage() {
           </div>
 
           {/* Summary metrics — row 2: shown when any part payment, top-up, or investment exists */}
-          {(results.hasPartPayments || results.hasInvestments) && <div className="metric-grid fade-up" style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginTop: '12px' }}>
+          {(results.hasPartPayments || results.hasInvestments) && <div className="metric-grid fade-up" style={{ marginTop: '12px' }}>
             <div className="metric-card">
               <div className="metric-label">Estimated Tax</div>
               <div className="metric-value" style={{ color: results.totalTax > 0 ? 'var(--red)' : 'var(--text3)' }}>
