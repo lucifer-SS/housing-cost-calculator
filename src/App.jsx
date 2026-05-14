@@ -70,8 +70,16 @@ export default function App() {
   const [events, setEvents] = useState(DEFAULT_EVENTS)
   const [results, setResults] = useState(null)
   const [error, setError] = useState('')
-  const [loanEnabled, setLoanEnabled] = useState(true)
-  const [rentEnabled, setRentEnabled] = useState(true)
+  const [loanEnabled, setLoanEnabled] = useState(false)
+  const [rentEnabled, setRentEnabled] = useState(false)
+
+  useEffect(() => {
+    const pv = parseFloat(form.propertyValue) || 0
+    const la = parseFloat(form.loanAmount) || 0
+    if (pv > 0 && la > 0) {
+      setField('downPayment', String(Math.max(0, pv - la)))
+    }
+  }, [form.propertyValue, form.loanAmount])
 
   const computedLoan = useMemo(() => computeLoanParams(form), [
     form.loanMode, form.loanAmount, form.loanRate, form.loanTenure,

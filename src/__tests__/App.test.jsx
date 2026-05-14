@@ -13,6 +13,11 @@ function renderAtHousing() {
   fireEvent.click(screen.getByText('House Investment'))
 }
 
+// Expand loan and rent sections (both excluded by default)
+function enableLoanAndRent() {
+  screen.getAllByText('excluded').forEach(btn => fireEvent.click(btn))
+}
+
 describe('App — rendering', () => {
   it('renders the header logo', () => {
     render(<App />)
@@ -35,6 +40,7 @@ describe('App — rendering', () => {
 
   it('pre-fills default form values', () => {
     renderAtHousing()
+    enableLoanAndRent()
     expect(screen.getByDisplayValue('1,10,00,000')).toBeInTheDocument()
     expect(screen.getByDisplayValue('89,00,000')).toBeInTheDocument()
     expect(screen.getByDisplayValue('75,500')).toBeInTheDocument()
@@ -56,6 +62,7 @@ describe('App — rendering', () => {
 describe('App — loan mode toggle', () => {
   it('switches to Rate & Tenure mode, hiding EMI inputs', async () => {
     renderAtHousing()
+    enableLoanAndRent()
     expect(screen.getByDisplayValue('75,500')).toBeInTheDocument()
     fireEvent.click(screen.getByText('Rate & Tenure'))
     expect(screen.queryByDisplayValue('75,500')).not.toBeInTheDocument()
@@ -65,6 +72,7 @@ describe('App — loan mode toggle', () => {
 
   it('switches back to EMI mode, restoring EMI inputs', async () => {
     renderAtHousing()
+    enableLoanAndRent()
     fireEvent.click(screen.getByText('Rate & Tenure'))
     fireEvent.click(screen.getByText('EMI & Outstanding'))
     expect(screen.getByDisplayValue('75,500')).toBeInTheDocument()
@@ -94,6 +102,7 @@ describe('App — calculate', () => {
   it('shows XIRR result after clicking Calculate with default values', async () => {
     const user = userEvent.setup()
     renderAtHousing()
+    enableLoanAndRent()
     await user.click(screen.getByText('Calculate Returns'))
     await waitFor(() => expect(screen.getByText(/XIRR:/)).toBeInTheDocument())
     // Default scenario with 10% annual rent increase yields ~6.75% XIRR
@@ -149,6 +158,7 @@ describe('App — calculate', () => {
   it('Rate & Tenure mode: computes and uses EMI/outstanding in the calculation', async () => {
     const user = userEvent.setup()
     renderAtHousing()
+    enableLoanAndRent()
     fireEvent.click(screen.getByText('Rate & Tenure'))
     await user.click(screen.getByText('Calculate Returns'))
     await waitFor(() => expect(screen.getByText(/XIRR:/)).toBeInTheDocument())

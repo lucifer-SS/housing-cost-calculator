@@ -315,7 +315,7 @@ export default function RentInvestmentPage() {
             }}>
               ⚠ Corpus fully depleted at month {results.depletedAt}
               {results.startDate
-                ? ` (${fmtDate(new Date(results.startDate.getTime()).setMonth ? (() => { const d = new Date(results.startDate); d.setMonth(d.getMonth() + results.depletedAt - 1); return d })() : results.startDate)})`
+                ? `  - ${fmtDate(new Date(results.startDate.getTime()).setMonth ? (() => { const d = new Date(results.startDate); d.setMonth(d.getMonth() + results.depletedAt - 1); return d })() : results.startDate)}`
                 : ''
               }. Results shown up to this point.
             </div>
