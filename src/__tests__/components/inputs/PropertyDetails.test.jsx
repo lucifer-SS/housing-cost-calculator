@@ -54,7 +54,7 @@ describe('PropertyDetails', () => {
   })
 
   it('shows computed valuation box when computedValuation is provided', () => {
-    render(<PropertyDetails form={{ ...form, valuationMode: 'appreciation' }} onChange={vi.fn()} computedValuation={{ value: 18897000 }} />)
+    render(<PropertyDetails form={{ ...form, valuationMode: 'appreciation' }} onChange={vi.fn()} computedValuation={{ value: 18897000 }} effectiveValuationDate={new Date('2029-05-01')} />)
     expect(screen.getByText('Computed market value')).toBeInTheDocument()
   })
 

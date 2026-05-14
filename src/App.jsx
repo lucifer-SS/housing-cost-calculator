@@ -16,6 +16,8 @@ const DEFAULT_FORM = {
   valuationMode: 'actual',
   currentValue: '18000000',
   annualAppreciation: '8',
+  appreciationTenure: '10',
+  appreciationTenureUnit: 'years',
   purchaseDate: '2019-05-01',
   valuationDate: '2026-05-01',
   loanAmount: '8900000',
@@ -82,22 +84,37 @@ export default function App() {
     }
   }, [form.propertyValue, form.loanAmount])
 
-  const computedLoan = useMemo(() => computeLoanParams(form), [
+  // Derive valuation date: in appreciation mode, compute from purchase date + tenure
+  const effectiveValuationDate = useMemo(() => {
+    if (form.valuationMode === 'appreciation') {
+      const tenureMonths = form.appreciationTenureUnit === 'years'
+        ? (parseInt(form.appreciationTenure) || 0) * 12
+        : (parseInt(form.appreciationTenure) || 0)
+      if (tenureMonths <= 0) return null
+      const d = new Date(form.purchaseDate)
+      d.setMonth(d.getMonth() + tenureMonths)
+      return d
+    }
+    return form.valuationDate ? new Date(form.valuationDate) : null
+  }, [form.valuationMode, form.purchaseDate, form.valuationDate, form.appreciationTenure, form.appreciationTenureUnit])
+
+  const computedLoan = useMemo(() => computeLoanParams({ ...form, valuationDate: effectiveValuationDate?.toISOString().slice(0, 10) ?? form.valuationDate }), [
     form.loanMode, form.loanAmount, form.loanRate, form.loanTenure,
     form.monthlyEmi, form.outstandingLoan, form.purchaseDate, form.valuationDate,
+    effectiveValuationDate,
   ])
 
   const computedValuation = useMemo(() => {
     if (form.valuationMode !== 'appreciation') return null
+    if (!effectiveValuationDate) return null
     const purchaseDate = new Date(form.purchaseDate)
-    const valuationDate = new Date(form.valuationDate)
-    const months = monthsBetween(purchaseDate, valuationDate)
+    const months = monthsBetween(purchaseDate, effectiveValuationDate)
     if (months <= 0) return null
     const propertyValue = parseFloat(form.propertyValue) || 0
     const appreciation = parseFloat(form.annualAppreciation) || 0
     if (!propertyValue || appreciation <= 0) return null
     return { value: Math.round(propertyValue * Math.pow(1 + appreciation / 100, months / 12)) }
-  }, [form.valuationMode, form.purchaseDate, form.valuationDate, form.propertyValue, form.annualAppreciation])
+  }, [form.valuationMode, effectiveValuationDate, form.propertyValue, form.annualAppreciation])
 
   function setField(key, value) {
     setForm(f => ({ ...f, [key]: value }))
@@ -119,13 +136,14 @@ export default function App() {
     setError('')
     try {
       const purchaseDate = new Date(form.purchaseDate)
-      const valuationDate = new Date(form.valuationDate)
+      if (!effectiveValuationDate) throw new Error('Please enter a valid valuation date.')
+      const valuationDate = new Date(effectiveValuationDate)
       const movedInDate = new Date(form.movedInDate)
       const monthlyRent = rentEnabled ? (parseFloat(form.monthlyRent) || 0) : 0
       const annualRentIncrease = rentEnabled ? (parseFloat(form.annualRentIncrease) || 0) : 0
       const propertyValue = parseFloat(form.propertyValue) || 0
       const totalMonths = monthsBetween(purchaseDate, valuationDate)
-      if (totalMonths <= 0) throw new Error('Valuation date must be after purchase date.')
+      if (totalMonths <= 0) throw new Error(form.valuationMode === 'appreciation' ? 'Please enter a valid holding tenure.' : 'Valuation date must be after purchase date.')
       const currentValue = form.valuationMode === 'appreciation'
         ? Math.round(propertyValue * Math.pow(1 + (parseFloat(form.annualAppreciation) || 0) / 100, totalMonths / 12))
         : parseFloat(form.currentValue) || 0
@@ -303,7 +321,7 @@ export default function App() {
 
       {activeTab === 'housing' && (
         <>
-          <PropertyDetails form={form} onChange={setField} computedValuation={computedValuation} />
+          <PropertyDetails form={form} onChange={setField} computedValuation={computedValuation} effectiveValuationDate={effectiveValuationDate} />
           <LoanDetails form={form} onChange={setField} computedLoan={computedLoan} enabled={loanEnabled} onToggle={() => setLoanEnabled(v => !v)} />
           <RentSavings form={form} onChange={setField} enabled={rentEnabled} onToggle={() => setRentEnabled(v => !v)} />
           <ExtraExpenses events={events} onAdd={addEvent} onRemove={removeEvent} onChange={updateEvent} enabled={extraEnabled} onToggle={() => setExtraEnabled(v => !v)} />
