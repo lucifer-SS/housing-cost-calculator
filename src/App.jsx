@@ -287,7 +287,7 @@ export default function App() {
             className={`tab-btn${activeTab === 'rent-invest' ? ' active' : ''}`}
             onClick={() => navigate('rent-invest')}
           >
-            Rent &amp; Investment
+            Rent &amp; Invest
           </button>
         </nav>
       )}

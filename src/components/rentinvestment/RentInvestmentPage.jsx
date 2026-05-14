@@ -103,11 +103,12 @@ export default function RentInvestmentPage() {
       }
 
       let xirrVal = 0
-      try { xirrVal = xirr(cfVals, cfDates) } catch { xirrVal = 0 }
+      try { xirrVal = xirr(cfVals, cfDates) } catch { xirrVal = NaN }
+      const xirrPct = isFinite(xirrVal) && !isNaN(xirrVal) ? xirrVal * 100 : null
 
       setResults({
         ...res,
-        xirrPct: xirrVal * 100,
+        xirrPct,
         investRate,
         startDate,
         estEmi,
@@ -169,9 +170,9 @@ export default function RentInvestmentPage() {
           <div className="field">
             <label>Investment Option</label>
             <select className="amort-select" value={form.investType} onChange={e => setField('investType', e.target.value)}>
-              <option value="fd-7">FD @ 7% p.a.</option>
-              <option value="debt-9">Debt Fund @ 9% p.a.</option>
-              <option value="equity-12">Equity @ 12% p.a.</option>
+              <option value="fd-7">Invest @ 7% (FD)</option>
+              <option value="debt-9">Invest @ 9% (Debt)</option>
+              <option value="equity-12">Invest @ 12% (Equity)</option>
             </select>
           </div>
         </div>
@@ -278,9 +279,9 @@ export default function RentInvestmentPage() {
                 <div className="field">
                   <label>Option</label>
                   <select className="amort-select" value={ls.investType} onChange={e => updateLumpsum(ls.id, 'investType', e.target.value)}>
-                    <option value="fd-7">FD @ 7%</option>
-                    <option value="debt-9">Debt @ 9%</option>
-                    <option value="equity-12">Equity @ 12%</option>
+                    <option value="fd-7">Invest @ 7% (FD)</option>
+                    <option value="debt-9">Invest @ 9% (Debt)</option>
+                    <option value="equity-12">Invest @ 12% (Equity)</option>
                   </select>
                 </div>
                 <div className="field">
@@ -345,8 +346,8 @@ export default function RentInvestmentPage() {
             </div>
             <div className="metric-card highlight">
               <div className="metric-label">XIRR</div>
-              <div className={`metric-value${results.xirrPct >= 8 ? ' accent' : results.xirrPct >= 0 ? ' orange' : ' red'}`}>
-                {results.xirrPct.toFixed(2)}%
+              <div className={`metric-value${results.xirrPct === null ? ' red' : results.xirrPct >= 8 ? ' accent' : results.xirrPct >= 0 ? ' orange' : ' red'}`}>
+                {results.xirrPct === null ? '—' : `${results.xirrPct.toFixed(2)}%`}
               </div>
               <div className="metric-sub">annualised return on all outflows</div>
             </div>
@@ -379,10 +380,10 @@ export default function RentInvestmentPage() {
             )}
             <div className="metric-card">
               <div className="metric-label">Profit / Loss</div>
-              <div className={`metric-value${results.finalCorpus - results.totalInvested >= 0 ? ' green' : ' red'}`}>
-                {fmtCr(Math.abs(results.finalCorpus - results.totalInvested))}
+              <div className={`metric-value${results.finalCorpus - results.downPayment >= 0 ? ' green' : ' red'}`}>
+                {fmtCr(Math.abs(results.finalCorpus - results.downPayment))}
               </div>
-              <div className="metric-sub">{results.finalCorpus >= results.totalInvested ? 'gain on invested capital' : 'loss on invested capital'}</div>
+              <div className="metric-sub">{results.finalCorpus >= results.downPayment ? 'gain on lump sum invested' : 'loss on lump sum invested'}</div>
             </div>
           </div>
 
