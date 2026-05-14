@@ -1,7 +1,7 @@
-export const INVEST_OPTION_RATES = { 'fd-7': 7, 'debt-9': 9, 'equity-12': 12 }
+import { RI_INVEST_RATES } from '../constants/investmentOptions'
 
 export function getInvestRate(optionKey) {
-  return INVEST_OPTION_RATES[optionKey] ?? 12
+  return RI_INVEST_RATES[optionKey] ?? 12
 }
 
 /**

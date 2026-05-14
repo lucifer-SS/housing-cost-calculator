@@ -36,6 +36,13 @@ export function solveRate(P, E, O, m, guess = 0.007) {
   return null
 }
 
+export function monthToDate(startDate, month) {
+  if (!startDate) return null
+  const d = new Date(startDate)
+  d.setMonth(d.getMonth() + month - 1)
+  return d
+}
+
 export function computeLoanParams(form) {
   const purchaseDate = new Date(form.purchaseDate)
   const valuationDate = new Date(form.valuationDate)

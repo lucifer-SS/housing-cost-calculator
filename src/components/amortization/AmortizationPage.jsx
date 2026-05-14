@@ -1,9 +1,12 @@
 import { useState, useMemo } from 'react'
 import CurrencyInput from '../shared/CurrencyInput'
+import MetricCard from '../shared/MetricCard'
+import TenureInput from '../shared/TenureInput'
 import AmortizationChart from './AmortizationChart'
 import { buildSchedule, calcEmi } from '../../utils/amortization'
 import { fmtINR, fmtCr, fmtDate } from '../../utils/format'
-import { monthsBetween } from '../../utils/finance'
+import { monthsBetween, monthToDate } from '../../utils/finance'
+import { AMORT_INVEST_OPTIONS, AMORT_INVEST_RATES, AMORT_TAX_RATES } from '../../constants/investmentOptions'
 
 const TODAY = new Date().toISOString().slice(0, 10)
 
@@ -18,13 +21,6 @@ const DEFAULT_FORM = {
 
 let nextPPId = 1
 let nextRCId = 1
-
-function monthToDate(startDate, month) {
-  if (!startDate) return null
-  const d = new Date(startDate)
-  d.setMonth(d.getMonth() + month - 1)
-  return d
-}
 
 export default function AmortizationPage() {
   const [form, setForm] = useState(DEFAULT_FORM)
@@ -70,6 +66,8 @@ export default function AmortizationPage() {
     setRateChanges(rc => rc.map(r => r.id === id ? { ...r, [key]: value } : r))
   }
 
+  const isInvest = type => type in AMORT_INVEST_RATES
+
   function generate() {
     setError('')
     try {
@@ -87,10 +85,6 @@ export default function AmortizationPage() {
       if (hasDateEntries && !startDate) {
         throw new Error('Please set an EMI Start Date to use date-based rate changes and part payments.')
       }
-
-      const INVEST_RATES = { 'invest-7': 7, 'invest-9': 9, 'invest-12': 12 }
-      const TAX_RATES = { 'invest-7': 0.35, 'invest-9': 0.35, 'invest-12': 0.125 }
-      const isInvest = type => type in INVEST_RATES
 
       const ppInput = partPayments
         .filter(p => p.date && p.amount && !isInvest(p.type))
@@ -123,7 +117,6 @@ export default function AmortizationPage() {
         partPaymentMode: form.partPaymentMode,
       })
 
-      // Investments grow from invest date until loan closes; no withdrawal date needed
       const investments = partPayments
         .filter(p => isInvest(p.type) && p.date && p.amount)
         .map(p => {
@@ -132,10 +125,10 @@ export default function AmortizationPage() {
           if (investIdx < 1) throw new Error('An investment date is before the EMI start date.')
           if (investIdx >= res.completedAt) throw new Error('An investment date must be before the loan closes.')
           const durationMonths = res.completedAt - investIdx
-          const investRate = INVEST_RATES[p.type]
+          const investRate = AMORT_INVEST_RATES[p.type]
           const maturityValue = amount * Math.pow(1 + investRate / 100, durationMonths / 12)
           const profit = maturityValue - amount
-          const tax = profit * TAX_RATES[p.type]
+          const tax = profit * AMORT_TAX_RATES[p.type]
           return { amount, maturityValue, profit, tax }
         })
 
@@ -143,9 +136,8 @@ export default function AmortizationPage() {
       const totalInvestmentProfit = investments.reduce((s, inv) => s + inv.profit, 0)
       const totalTax = investments.reduce((s, inv) => s + inv.tax, 0)
       const netInterest = res.totalInterest - (totalInvestmentProfit + totalTax)
-      // Implied rate: what reducing-balance rate would produce netInterest on the same principal/tenure
       const effectiveEmi = (netInterest + principal) / tenureMonths
-      let er = (2 * netInterest) / (principal * (tenureMonths + 1)) // simple-interest approximation as seed
+      let er = (2 * netInterest) / (principal * (tenureMonths + 1))
       for (let i = 0; i < 300; i++) {
         const fn = Math.pow(1 + er, tenureMonths)
         const f = principal * er * fn - effectiveEmi * (fn - 1)
@@ -167,7 +159,6 @@ export default function AmortizationPage() {
     }
   }
 
-  // Yearly summary rows derived from monthly schedule
   const yearlySchedule = useMemo(() => {
     if (!results?.schedule?.length) return []
     const years = []
@@ -194,7 +185,6 @@ export default function AmortizationPage() {
 
   const hasStartDate = !!form.startDate
 
-  // Interest saved versus no-prepayment scenario
   const interestSaved = useMemo(() => {
     if (!results || !liveComputed) return 0
     const noPrep = liveComputed.emi * results.tenureMonths
@@ -236,27 +226,12 @@ export default function AmortizationPage() {
           </div>
           <div className="field">
             <label>Tenure</label>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <div className="input-wrap" style={{ flex: 1 }}>
-                <input
-                  type="number"
-                  value={form.tenure}
-                  onChange={e => setField('tenure', e.target.value)}
-                  placeholder={form.tenureUnit === 'years' ? '20' : '240'}
-                  min="1"
-                />
-              </div>
-              <button
-                className={`mode-btn${form.tenureUnit === 'years' ? ' active' : ''}`}
-                style={{ padding: '7px 12px' }}
-                onClick={() => setField('tenureUnit', 'years')}
-              >Yrs</button>
-              <button
-                className={`mode-btn${form.tenureUnit === 'months' ? ' active' : ''}`}
-                style={{ padding: '7px 12px' }}
-                onClick={() => setField('tenureUnit', 'months')}
-              >Mo</button>
-            </div>
+            <TenureInput
+              value={form.tenure}
+              unit={form.tenureUnit}
+              onChange={v => setField('tenure', v)}
+              onUnitChange={u => setField('tenureUnit', u)}
+            />
           </div>
         </div>
 
@@ -340,7 +315,7 @@ export default function AmortizationPage() {
         <button className="add-btn" onClick={addRateChange}>+ Add Rate Change</button>
       </div>
 
-      {/* ── Part Payments & Top-ups ── */}
+      {/* ── Investments & Top-ups ── */}
       <div className="input-section">
         <div className="section-label">Investments &amp; Top-ups</div>
         {partPayments.length > 0 && (
@@ -378,9 +353,9 @@ export default function AmortizationPage() {
                       <option value="prepayment">Prepayment ↓</option>
                       <option value="topup">Top-up ↑</option>
                       <optgroup label="Invest instead">
-                        <option value="invest-7">Invest @ 7% (FD)</option>
-                        <option value="invest-9">Invest @ 9% (Debt)</option>
-                        <option value="invest-12">Invest @ 12% (Equity)</option>
+                        {AMORT_INVEST_OPTIONS.map(opt => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
                       </optgroup>
                     </select>
                   </div>
@@ -412,81 +387,71 @@ export default function AmortizationPage() {
 
           {/* Summary metrics — row 1 */}
           <div className="metric-grid fade-up">
-            <div className="metric-card highlight">
-              <div className="metric-label">Monthly EMI</div>
-              <div className="metric-value accent">{fmtINR(results.originalEmi)}</div>
-              <div className="metric-sub">at {results.annualRate}% p.a.</div>
-            </div>
-            <div className="metric-card">
-              <div className="metric-label">Total Interest</div>
-              <div className="metric-value orange">{fmtCr(results.totalInterest)}</div>
-              <div className="metric-sub">
-                {((results.totalInterest / results.loanAmount) * 100).toFixed(0)}% of principal
-              </div>
-            </div>
-            <div className="metric-card">
-              <div className="metric-label">Loan Closes</div>
-              <div className="metric-value" style={{ fontSize: results.startDate ? '16px' : '20px' }}>
-                {results.startDate
-                  ? fmtDate(monthToDate(results.startDate, results.completedAt))
-                  : `Month ${results.completedAt}`}
-              </div>
-              <div className="metric-sub">{results.completedAt} EMIs paid</div>
-            </div>
-            <div className={`metric-card${results.tenureSaved > 0 ? ' highlight' : ''}`}>
-              <div className="metric-label">
-                {results.tenureSaved > 0 ? 'Tenure Saved' : 'Full Tenure'}
-              </div>
-              <div className={`metric-value${results.tenureSaved > 0 ? ' green' : ''}`}>
-                {results.tenureSaved > 0
-                  ? (results.tenureSaved >= 12
-                    ? `${Math.floor(results.tenureSaved / 12)}y ${results.tenureSaved % 12 > 0 ? results.tenureSaved % 12 + 'm' : ''}`
-                    : `${results.tenureSaved}m`)
-                  : `${Math.floor(results.tenureMonths / 12)}y`}
-              </div>
-              <div className="metric-sub">
-                {results.tenureSaved > 0
-                  ? `${fmtCr(interestSaved)} interest saved`
-                  : 'no prepayments'}
-              </div>
-            </div>
+            <MetricCard
+              label="Monthly EMI"
+              value={fmtINR(results.originalEmi)}
+              sub={`at ${results.annualRate}% p.a.`}
+              cls="accent"
+              highlight
+            />
+            <MetricCard
+              label="Total Interest"
+              value={fmtCr(results.totalInterest)}
+              sub={`${((results.totalInterest / results.loanAmount) * 100).toFixed(0)}% of principal`}
+              cls="orange"
+            />
+            <MetricCard
+              label="Loan Closes"
+              value={results.startDate
+                ? fmtDate(monthToDate(results.startDate, results.completedAt))
+                : `Month ${results.completedAt}`}
+              sub={`${results.completedAt} EMIs paid`}
+              valueStyle={{ fontSize: results.startDate ? '16px' : '20px' }}
+            />
+            <MetricCard
+              label={results.tenureSaved > 0 ? 'Tenure Saved' : 'Full Tenure'}
+              value={results.tenureSaved > 0
+                ? (results.tenureSaved >= 12
+                  ? `${Math.floor(results.tenureSaved / 12)}y ${results.tenureSaved % 12 > 0 ? results.tenureSaved % 12 + 'm' : ''}`
+                  : `${results.tenureSaved}m`)
+                : `${Math.floor(results.tenureMonths / 12)}y`}
+              sub={results.tenureSaved > 0
+                ? `${fmtCr(interestSaved)} interest saved`
+                : 'no prepayments'}
+              cls={results.tenureSaved > 0 ? 'green' : ''}
+              highlight={results.tenureSaved > 0}
+            />
           </div>
 
           {/* Summary metrics — row 2: shown when any part payment, top-up, or investment exists */}
-          {(results.hasPartPayments || results.hasInvestments) && <div className="metric-grid fade-up" style={{ marginTop: '12px' }}>
-            <div className="metric-card">
-              <div className="metric-label">Estimated Tax</div>
-              <div className="metric-value" style={{ color: results.totalTax > 0 ? 'var(--red)' : 'var(--text3)' }}>
-                {results.totalTax > 0 ? fmtCr(results.totalTax) : '—'}
-              </div>
-              <div className="metric-sub">
-                {results.totalTax > 0 ? 'on investment profits (FD/Debt 35%, Equity 12.5%)' : 'no investments'}
-              </div>
+          {(results.hasPartPayments || results.hasInvestments) && (
+            <div className="metric-grid fade-up" style={{ marginTop: '12px' }}>
+              <MetricCard
+                label="Estimated Tax"
+                value={results.totalTax > 0 ? fmtCr(results.totalTax) : '—'}
+                sub={results.totalTax > 0 ? 'on investment profits (FD/Debt 35%, Equity 12.5%)' : 'no investments'}
+                valueStyle={{ color: results.totalTax > 0 ? 'var(--red)' : 'var(--text3)' }}
+              />
+              <MetricCard
+                label="Interest Earned"
+                value={results.totalInvestmentProfit > 0 ? fmtCr(results.totalInvestmentProfit) : '—'}
+                sub={results.totalInvestmentProfit > 0 ? 'from invest-instead entries' : ''}
+                cls="green"
+              />
+              <MetricCard
+                label="Net Interest"
+                value={results.hasInvestments ? fmtCr(results.netInterest) : '—'}
+                sub={results.hasInvestments ? 'interest − returns + tax' : ''}
+                valueStyle={{ color: results.hasInvestments ? (results.totalInvestmentProfit > 0 ? 'var(--accent2)' : 'var(--accent3)') : 'var(--text3)' }}
+              />
+              <MetricCard
+                label="Effective Rate"
+                value={`${results.effectiveRate.toFixed(2)}%`}
+                sub="implied rate on net interest paid"
+                valueStyle={{ color: 'var(--accent3)' }}
+              />
             </div>
-            <div className="metric-card">
-              <div className="metric-label">Interest Earned</div>
-              <div className="metric-value green">
-                {results.totalInvestmentProfit > 0 ? fmtCr(results.totalInvestmentProfit) : '—'}
-              </div>
-              <div className="metric-sub">
-                {results.totalInvestmentProfit > 0 ? 'from invest-instead entries' : ''}
-              </div>
-            </div>
-            <div className="metric-card">
-              <div className="metric-label">Net Interest</div>
-              <div className="metric-value" style={{ color: results.hasInvestments ? (results.totalInvestmentProfit > 0 ? 'var(--accent2)' : 'var(--accent3)') : 'var(--text3)' }}>
-                {results.hasInvestments ? fmtCr(results.netInterest) : '—'}
-              </div>
-              <div className="metric-sub">{results.hasInvestments ? 'interest − returns + tax' : ''}</div>
-            </div>
-            <div className="metric-card">
-              <div className="metric-label">Effective Rate</div>
-              <div className="metric-value" style={{ color: 'var(--accent3)' }}>
-                {results.effectiveRate.toFixed(2)}%
-              </div>
-              <div className="metric-sub">implied rate on net interest paid</div>
-            </div>
-          </div>}
+          )}
 
           {/* Chart */}
           <AmortizationChart schedule={results.schedule} hasPartPayments={results.hasPartPayments} />
