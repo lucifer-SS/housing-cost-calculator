@@ -8,6 +8,7 @@ import ExtraExpenses from './components/inputs/ExtraExpenses'
 import Results from './components/results/Results'
 import AmortizationPage from './components/amortization/AmortizationPage'
 import RentInvestmentPage from './components/rentinvestment/RentInvestmentPage'
+import SimpleInvestingPage from './components/investing/SimpleInvestingPage'
 import { calcEmi, calcOutstanding, monthsBetween, xirr, computeLoanParams } from './utils/finance'
 import { fmtINR, fmtDate } from './utils/format'
 
@@ -53,6 +54,7 @@ function hashToTab(hash) {
   if (hash === '#/house_investment') return 'housing'
   if (hash === '#/loan_amortization') return 'amortization'
   if (hash === '#/rent_investment') return 'rent-invest'
+  if (hash === '#/simple_investing') return 'investing'
   return 'home'
 }
 
@@ -60,6 +62,7 @@ function tabToHash(tab) {
   if (tab === 'housing') return '#/house_investment'
   if (tab === 'amortization') return '#/loan_amortization'
   if (tab === 'rent-invest') return '#/rent_investment'
+  if (tab === 'investing') return '#/simple_investing'
   return '#/'
 }
 
@@ -334,6 +337,12 @@ export default function App() {
           >
             Rent &amp; Invest
           </button>
+          <button
+            className={`tab-btn${activeTab === 'investing' ? ' active' : ''}`}
+            onClick={() => navigate('investing')}
+          >
+            Simple Investing
+          </button>
         </nav>
       )}
 
@@ -351,6 +360,7 @@ export default function App() {
 
       {activeTab === 'amortization' && <AmortizationPage />}
       {activeTab === 'rent-invest' && <RentInvestmentPage />}
+      {activeTab === 'investing' && <SimpleInvestingPage />}
     </div>
   )
 }

@@ -38,6 +38,18 @@ export default function HomePage({ onNavigate }) {
           </div>
           <span className="home-tile-arrow">→</span>
         </button>
+
+        <button className="home-tile" onClick={() => onNavigate('investing')}>
+          <div className="home-tile-inner">
+            <div className="home-tile-label">SIP · Lumpsum · CAGR</div>
+            <div className="home-tile-title">Simple Investing</div>
+            <p className="home-tile-desc">
+              Calculate the maturity value of your SIP or lump sum — see corpus growth
+              year by year and exactly how much is principal versus interest earned.
+            </p>
+          </div>
+          <span className="home-tile-arrow">→</span>
+        </button>
       </div>
     </div>
   )
