@@ -19,8 +19,8 @@ describe('AmortizationPage — rendering', () => {
 
   it('pre-fills default loan amount and rate', () => {
     render(<AmortizationPage />)
-    expect(screen.getByDisplayValue('50,00,000')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('10.5')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('1,60,00,000')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('7.2')).toBeInTheDocument()
     expect(screen.getByDisplayValue('20')).toBeInTheDocument()
   })
 
@@ -122,7 +122,7 @@ describe('AmortizationPage — validation', () => {
   it('shows error when loan amount is cleared', async () => {
     const user = userEvent.setup()
     render(<AmortizationPage />)
-    const amountInput = screen.getByDisplayValue('50,00,000')
+    const amountInput = screen.getByDisplayValue('1,60,00,000')
     await user.clear(amountInput)
     await user.click(screen.getByText('Generate Amortization Schedule'))
     await waitFor(() => {
@@ -133,7 +133,7 @@ describe('AmortizationPage — validation', () => {
   it('shows error when interest rate is cleared', async () => {
     const user = userEvent.setup()
     render(<AmortizationPage />)
-    const rateInput = screen.getByDisplayValue('10.5')
+    const rateInput = screen.getByDisplayValue('7.2')
     await user.clear(rateInput)
     await user.click(screen.getByText('Generate Amortization Schedule'))
     await waitFor(() => {
@@ -285,9 +285,9 @@ describe('AmortizationPage — netInterest and effectiveRate color logic', () =>
     // If formula is correct, effectiveRate should be between annualRate and 0 for moderate investment
     const effectiveRateCard = screen.getByText('Effective Rate').closest('.metric-card')
     const effectiveRateValue = effectiveRateCard.querySelector('.metric-value')
-    // With 5L equity on a 50L 10.5% loan, effective rate should be positive but lower than 10.5%
+    // With equity investment on a 1.6Cr 7.2% loan, effective rate should be positive but lower than 7.2%
     const rateNum = parseFloat(effectiveRateValue.textContent)
-    expect(rateNum).toBeLessThan(10.5)
+    expect(rateNum).toBeLessThan(7.2)
     expect(rateNum).toBeGreaterThan(0)
     // color should be orange (positive effectiveRate)
     expect(effectiveRateValue.style.color).toBe('var(--accent3)')

@@ -12,8 +12,8 @@ const _now = new Date()
 const FIRST_NEXT_MONTH = new Date(_now.getFullYear(), _now.getMonth() + 1, 1).toISOString().slice(0, 10)
 
 const DEFAULT_FORM = {
-  loanAmount: '5000000',
-  annualRate: '10.5',
+  loanAmount: '16000000',
+  annualRate: '7.2',
   tenure: '20',
   tenureUnit: 'years',
   startDate: FIRST_NEXT_MONTH,
