@@ -125,7 +125,7 @@ export default function AmortizationPage() {
           const investIdx = monthsBetween(startDate, new Date(p.date)) + 1
           if (investIdx < 1) throw new Error('An investment date is before the EMI start date.')
           if (investIdx >= res.completedAt) throw new Error('An investment date must be before the loan closes.')
-          const durationMonths = res.completedAt - investIdx
+          const durationMonths = res.completedAt - investIdx + 1
           const maturityValue = growLumpsum(amount, getInvestRate(p.type), durationMonths)
           const profit = maturityValue - amount
           const tax = profit * getInvestTaxRate(p.type)
