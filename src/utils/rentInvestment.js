@@ -1,3 +1,4 @@
+import { cagrMonthlyRate } from './finance'
 import { getInvestRate } from '../constants/investmentOptions'
 
 // Re-export so existing imports (e.g. tests) continue to work unchanged.
@@ -15,8 +16,8 @@ export { getInvestRate }
  * that different annual rates are applied correctly. SWP is withdrawn
  * proportionally across all pools.
  *
- * Growth formula: monthly compounding — each pool grows by (1 + annualRate/1200)
- * per month. This matches growLumpsum() from finance.js applied one step at a time.
+ * Growth formula: CAGR-equivalent monthly compounding — each pool grows by cagrMonthlyRate(annualRate)
+ * per month, so compounding for 12 months yields exactly the stated annual return (same as growLumpsum).
  */
 export function buildRentInvestSchedule({
   downPayment,
@@ -28,14 +29,14 @@ export function buildRentInvestSchedule({
   investRate,          // annual %, e.g. 12
   additionalLumpsums,  // [{ month (1-indexed), amount, rate (annual %) }]
 }) {
-  const mainRate = investRate / 1200
+  const mainRate = cagrMonthlyRate(investRate)
   let mainPool = downPayment
 
   // Map: month → pools to add (each additional lumpsum gets its own growth pool)
   const lsByMonth = {}
   additionalLumpsums.forEach(ls => {
     if (!lsByMonth[ls.month]) lsByMonth[ls.month] = []
-    lsByMonth[ls.month].push({ rate: ls.rate / 1200, value: ls.amount })
+    lsByMonth[ls.month].push({ rate: cagrMonthlyRate(ls.rate), value: ls.amount })
   })
   const activeLsPools = []  // growing pools from additional lumpsums
 
@@ -50,7 +51,7 @@ export function buildRentInvestSchedule({
   for (let month = 1; month <= tenureMonths; month++) {
     const openingCorpus = mainPool + activeLsPools.reduce((s, p) => s + p.value, 0)
 
-    // Compound all pools by one month (same formula as growLumpsum applied per step)
+    // Compound all pools by one month using CAGR-equivalent monthly rate
     mainPool *= (1 + mainRate)
     activeLsPools.forEach(p => { p.value *= (1 + p.rate) })
 

@@ -37,11 +37,11 @@ describe('buildRentInvestSchedule — SIP scenario (EMI > rent)', () => {
     expect(res.depletedAt).toBeNull()
   })
 
-  it('corpus after 1 month: downPayment×1.01 + SIP(EMI−rent)', () => {
-    // 1,000,000 × 1.01 + (50,000 − 30,000) = 1,030,000
+  it('corpus after 1 month: downPayment×(1+cagrMonthlyRate(12)) + SIP(EMI−rent)', () => {
+    // 1,000,000 × (1.12)^(1/12) + (50,000 − 30,000) ≈ 1,029,489
     const res = buildRentInvestSchedule({ ...base, tenureMonths: 1 })
-    expect(res.finalCorpus).toBe(1_030_000)
-    expect(res.schedule[0].corpus).toBe(1_030_000)
+    expect(res.finalCorpus).toBe(1_029_489)
+    expect(res.schedule[0].corpus).toBe(1_029_489)
     expect(res.schedule[0].sipAmount).toBe(20_000)
     expect(res.schedule[0].swpAmount).toBe(0)
   })
@@ -85,10 +85,10 @@ describe('buildRentInvestSchedule — SWP scenario (rent > EMI)', () => {
     expect(res.totalSwpOut).toBe(12 * 30_000)
   })
 
-  it('corpus after 1 SWP month: (downPayment×1.01) − swpAmount', () => {
-    // 5,000,000 × 1.01 = 5,050,000; withdraw 30,000 → 5,020,000
+  it('corpus after 1 SWP month: (downPayment×(1+cagrMonthlyRate(12))) − swpAmount', () => {
+    // 5,000,000 × (1.12)^(1/12) ≈ 5,047,444; withdraw 30,000 → 5,017,444
     const res = buildRentInvestSchedule({ ...swpBase, tenureMonths: 1 })
-    expect(res.finalCorpus).toBe(5_020_000)
+    expect(res.finalCorpus).toBe(5_017_444)
   })
 
   it('corpus shrinks over time when SWP exceeds investment growth', () => {
@@ -210,13 +210,14 @@ describe('buildRentInvestSchedule — additional lump sums', () => {
 // ── down payment compounding ─────────────────────────────────────────────────
 
 describe('buildRentInvestSchedule — down payment', () => {
-  it('with no SIP and no rent increase, corpus = downPayment × (1.01)^n', () => {
+  it('with no SIP and no rent increase, corpus = downPayment × (1.12)^1 after 12 months at 12% CAGR', () => {
     // Make EMI == rent so SIP = 0; pure lump sum compounding
     const res = buildRentInvestSchedule({
       ...base, estEmi: 30_000, monthlyRent: 30_000,
       tenureMonths: 12, downPayment: 1_000_000, investRate: 12,
     })
-    const expected = Math.round(1_000_000 * Math.pow(1.01, 12))
+    // CAGR: 12 months at 12% p.a. → exactly 1,120,000
+    const expected = Math.round(1_000_000 * 1.12)
     expect(res.finalCorpus).toBe(expected)
   })
 })

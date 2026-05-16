@@ -3,6 +3,11 @@ export function growLumpsum(amount, annualRatePct, months) {
   return amount * Math.pow(1 + annualRatePct / 100, months / 12)
 }
 
+// CAGR-equivalent monthly compounding rate: compounding this for 12 months yields exactly annualPct% growth.
+export function cagrMonthlyRate(annualPct) {
+  return Math.pow(1 + annualPct / 100, 1 / 12) - 1
+}
+
 export function calcEmi(principal, monthlyRate, months) {
   if (months <= 0 || principal <= 0) return 0
   if (monthlyRate === 0) return principal / months
