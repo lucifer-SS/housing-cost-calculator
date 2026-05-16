@@ -136,20 +136,31 @@ export default function AmortizationPage() {
       const totalInvestmentProfit = investments.reduce((s, inv) => s + inv.profit, 0)
       const totalTax = investments.reduce((s, inv) => s + inv.tax, 0)
       const netInterest = res.totalInterest - totalInvestmentProfit + totalTax
-      const effectiveEmi = (netInterest + principal) / tenureMonths
-      let er = (2 * netInterest) / (principal * (tenureMonths + 1))
-      for (let i = 0; i < 300; i++) {
-        const fn = Math.pow(1 + er, tenureMonths)
-        const f = principal * er * fn - effectiveEmi * (fn - 1)
-        const df = principal * (fn + er * tenureMonths * Math.pow(1 + er, tenureMonths - 1)) - effectiveEmi * tenureMonths * Math.pow(1 + er, tenureMonths - 1)
-        if (!df) break
-        const rn = er - f / df
-        if (Math.abs(rn - er) < 1e-10) { er = rn; break }
-        er = rn > 0 ? rn : er / 2
+      let effectiveRate, effectiveRateIsLinear
+      if (tenureMonths <= 0) {
+        effectiveRate = 0
+        effectiveRateIsLinear = false
+      } else if (netInterest <= 0) {
+        // Investments fully offset loan interest — Newton won't converge; use linear approximation
+        effectiveRate = -(Math.abs(netInterest) / principal) / (tenureMonths / 12) * 100
+        effectiveRateIsLinear = true
+      } else {
+        const effectiveEmi = (netInterest + principal) / tenureMonths
+        let er = (2 * netInterest) / (principal * (tenureMonths + 1))
+        for (let i = 0; i < 300; i++) {
+          const fn = Math.pow(1 + er, tenureMonths)
+          const f = principal * er * fn - effectiveEmi * (fn - 1)
+          const df = principal * (fn + er * tenureMonths * Math.pow(1 + er, tenureMonths - 1)) - effectiveEmi * tenureMonths * Math.pow(1 + er, tenureMonths - 1)
+          if (!df) break
+          const rn = er - f / df
+          if (Math.abs(rn - er) < 1e-10) { er = rn; break }
+          er = Math.max(rn, -1)  // allow negative convergence; clamp at -100%/month to prevent overflow
+        }
+        effectiveRate = er * 12 * 100
+        effectiveRateIsLinear = false
       }
-      const effectiveRate = er * 12 * 100
 
-      setResults({ ...res, tenureMonths, startDate, loanAmount: principal, annualRate: rate, effectiveRate, totalInvestedAmount, totalInvestmentProfit, totalTax, netInterest, hasInvestments: investments.length > 0 })
+      setResults({ ...res, tenureMonths, startDate, loanAmount: principal, annualRate: rate, effectiveRate, effectiveRateIsLinear, totalInvestedAmount, totalInvestmentProfit, totalTax, netInterest, hasInvestments: investments.length > 0 })
 
       setTimeout(() => {
         document.getElementById('amort-results')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -447,8 +458,11 @@ export default function AmortizationPage() {
               <MetricCard
                 label="Effective Rate"
                 value={`${results.effectiveRate.toFixed(2)}%`}
-                sub="implied rate on net interest paid"
+                sub={results.effectiveRateIsLinear ? 'linear approx — investments exceed interest' : 'implied rate on net interest paid'}
                 valueStyle={{ color: results.effectiveRate < 0 ? 'var(--accent2)' : 'var(--accent3)' }}
+                tooltip={results.effectiveRateIsLinear
+                  ? 'Your investments offset more than 100% of loan interest. Shown as a linear approximation: |Net Interest| ÷ Principal ÷ Tenure (years). A negative value means investment returns exceed the total interest cost.'
+                  : 'The annual interest rate that would make an equivalent loan cost the same net interest over the same tenure, accounting for investment returns and tax.'}
               />
             </div>
           )}
