@@ -12,12 +12,12 @@ const _now = new Date()
 const FIRST_NEXT_MONTH = new Date(_now.getFullYear(), _now.getMonth() + 1, 1).toISOString().slice(0, 10)
 
 const DEFAULT_FORM = {
-  downPayment: '5000000',
+  downPayment: '4000000',
   investType: 'equity-12',
-  estEmi: '75000',
+  estEmi: '125976',
   tenure: '20',
   tenureUnit: 'years',
-  monthlyRent: '30000',
+  monthlyRent: '60000',
   annualRentIncrease: '10',
   startDate: FIRST_NEXT_MONTH,
 }

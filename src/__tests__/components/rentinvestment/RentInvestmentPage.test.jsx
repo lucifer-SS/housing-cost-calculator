@@ -20,9 +20,9 @@ describe('RentInvestmentPage — rendering', () => {
 
   it('pre-fills default form values', () => {
     render(<RentInvestmentPage />)
-    expect(screen.getByDisplayValue('50,00,000')).toBeInTheDocument()  // down payment
-    expect(screen.getByDisplayValue('75,000')).toBeInTheDocument()      // est. EMI
-    expect(screen.getByDisplayValue('30,000')).toBeInTheDocument()      // monthly rent
+    expect(screen.getByDisplayValue('40,00,000')).toBeInTheDocument()   // down payment
+    expect(screen.getByDisplayValue('1,25,976')).toBeInTheDocument()    // est. EMI
+    expect(screen.getByDisplayValue('60,000')).toBeInTheDocument()      // monthly rent
     expect(screen.getByDisplayValue('20')).toBeInTheDocument()          // tenure
     expect(screen.getByDisplayValue('10')).toBeInTheDocument()          // rent increase
   })
@@ -50,18 +50,18 @@ describe('RentInvestmentPage — rendering', () => {
 describe('RentInvestmentPage — SIP/SWP preview', () => {
   it('shows Starting monthly SIP when EMI > rent', () => {
     render(<RentInvestmentPage />)
-    // default: EMI 75,000 > rent 30,000 → SIP 45,000
+    // default: EMI 1,25,976 > rent 60,000 → SIP 65,976
     expect(screen.getByText(/starting monthly sip/i)).toBeInTheDocument()
-    expect(screen.getByText('₹45,000')).toBeInTheDocument()
+    expect(screen.getByText('₹65,976')).toBeInTheDocument()
   })
 
   it('shows Starting monthly SWP when rent > EMI', async () => {
     const user = userEvent.setup()
     render(<RentInvestmentPage />)
-    // Change rent to 90,000 (> default EMI 75,000)
-    const rentInput = screen.getByDisplayValue('30,000')
+    // Change rent to 1,50,000 (> default EMI 1,25,976)
+    const rentInput = screen.getByDisplayValue('60,000')
     await user.clear(rentInput)
-    await user.type(rentInput, '90000')
+    await user.type(rentInput, '150000')
     await waitFor(() => {
       expect(screen.getByText(/starting monthly swp/i)).toBeInTheDocument()
     })
@@ -100,7 +100,7 @@ describe('RentInvestmentPage — validation', () => {
   it('shows an error when down payment is cleared', async () => {
     const user = userEvent.setup()
     render(<RentInvestmentPage />)
-    const dpInput = screen.getByDisplayValue('50,00,000')
+    const dpInput = screen.getByDisplayValue('40,00,000')
     await user.clear(dpInput)
     await user.click(screen.getByText('Calculate Wealth Growth'))
     await waitFor(() => {
@@ -111,7 +111,7 @@ describe('RentInvestmentPage — validation', () => {
   it('shows an error when EMI is cleared', async () => {
     const user = userEvent.setup()
     render(<RentInvestmentPage />)
-    const emiInput = screen.getByDisplayValue('75,000')
+    const emiInput = screen.getByDisplayValue('1,25,976')
     await user.clear(emiInput)
     await user.click(screen.getByText('Calculate Wealth Growth'))
     await waitFor(() => {
@@ -217,12 +217,12 @@ describe('RentInvestmentPage — depletion warning', () => {
     render(<RentInvestmentPage />)
 
     // Set tiny down payment
-    const dpInput = screen.getByDisplayValue('50,00,000')
+    const dpInput = screen.getByDisplayValue('40,00,000')
     await user.clear(dpInput)
     await user.type(dpInput, '1000')
 
     // Set rent far above EMI
-    const rentInput = screen.getByDisplayValue('30,000')
+    const rentInput = screen.getByDisplayValue('60,000')
     await user.clear(rentInput)
     await user.type(rentInput, '500000')
 
