@@ -5,8 +5,8 @@ import TenureInput from '../shared/TenureInput'
 import AmortizationChart from './AmortizationChart'
 import { buildSchedule, calcEmi } from '../../utils/amortization'
 import { fmtINR, fmtCr, fmtDate } from '../../utils/format'
-import { monthsBetween, monthToDate } from '../../utils/finance'
-import { AMORT_INVEST_OPTIONS, AMORT_INVEST_RATES, AMORT_TAX_RATES } from '../../constants/investmentOptions'
+import { growLumpsum, monthsBetween, monthToDate } from '../../utils/finance'
+import { AMORT_INVEST_OPTIONS, getInvestRate, getInvestTaxRate, isInvestKey } from '../../constants/investmentOptions'
 
 const _now = new Date()
 const FIRST_NEXT_MONTH = new Date(_now.getFullYear(), _now.getMonth() + 1, 1).toISOString().slice(0, 10)
@@ -67,7 +67,7 @@ export default function AmortizationPage() {
     setRateChanges(rc => rc.map(r => r.id === id ? { ...r, [key]: value } : r))
   }
 
-  const isInvest = type => type in AMORT_INVEST_RATES
+  const isInvest = type => isInvestKey(type)
 
   function generate() {
     setError('')
@@ -126,10 +126,9 @@ export default function AmortizationPage() {
           if (investIdx < 1) throw new Error('An investment date is before the EMI start date.')
           if (investIdx >= res.completedAt) throw new Error('An investment date must be before the loan closes.')
           const durationMonths = res.completedAt - investIdx
-          const investRate = AMORT_INVEST_RATES[p.type]
-          const maturityValue = amount * Math.pow(1 + investRate / 100, durationMonths / 12)
+          const maturityValue = growLumpsum(amount, getInvestRate(p.type), durationMonths)
           const profit = maturityValue - amount
-          const tax = profit * AMORT_TAX_RATES[p.type]
+          const tax = profit * getInvestTaxRate(p.type)
           return { amount, maturityValue, profit, tax }
         })
 

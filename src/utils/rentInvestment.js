@@ -1,8 +1,7 @@
-import { RI_INVEST_RATES } from '../constants/investmentOptions'
+import { getInvestRate } from '../constants/investmentOptions'
 
-export function getInvestRate(optionKey) {
-  return RI_INVEST_RATES[optionKey] ?? 12
-}
+// Re-export so existing imports (e.g. tests) continue to work unchanged.
+export { getInvestRate }
 
 /**
  * Simulates renting while investing the down payment as lumpsum and the
@@ -15,6 +14,9 @@ export function getInvestRate(optionKey) {
  * Multiple investment pools are tracked (main + each additional lumpsum) so
  * that different annual rates are applied correctly. SWP is withdrawn
  * proportionally across all pools.
+ *
+ * Growth formula: monthly compounding — each pool grows by (1 + annualRate/1200)
+ * per month. This matches growLumpsum() from finance.js applied one step at a time.
  */
 export function buildRentInvestSchedule({
   downPayment,
@@ -48,7 +50,7 @@ export function buildRentInvestSchedule({
   for (let month = 1; month <= tenureMonths; month++) {
     const openingCorpus = mainPool + activeLsPools.reduce((s, p) => s + p.value, 0)
 
-    // Compound all pools
+    // Compound all pools by one month (same formula as growLumpsum applied per step)
     mainPool *= (1 + mainRate)
     activeLsPools.forEach(p => { p.value *= (1 + p.rate) })
 

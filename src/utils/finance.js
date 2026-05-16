@@ -1,3 +1,8 @@
+export function growLumpsum(amount, annualRatePct, months) {
+  if (months <= 0 || amount <= 0) return amount
+  return amount * Math.pow(1 + annualRatePct / 1200, months)
+}
+
 export function calcEmi(principal, monthlyRate, months) {
   if (months <= 0 || principal <= 0) return 0
   if (monthlyRate === 0) return principal / months
