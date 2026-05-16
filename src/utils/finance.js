@@ -1,3 +1,17 @@
+export function calcEmi(principal, monthlyRate, months) {
+  if (months <= 0 || principal <= 0) return 0
+  if (monthlyRate === 0) return principal / months
+  const fn = Math.pow(1 + monthlyRate, months)
+  return principal * monthlyRate * fn / (fn - 1)
+}
+
+export function calcOutstanding(principal, monthlyRate, emi, months) {
+  if (months <= 0) return 0
+  if (monthlyRate === 0) return Math.max(0, principal - emi * months)
+  const fm = Math.pow(1 + monthlyRate, months)
+  return Math.max(0, principal * fm - emi * (fm - 1) / monthlyRate)
+}
+
 export function monthsBetween(d1, d2) {
   return (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth())
 }
@@ -55,10 +69,8 @@ export function computeLoanParams(form) {
     const n = parseInt(form.loanTenure) || 0
     if (rAnnual <= 0 || n <= 0) return null
     const r = rAnnual / 1200
-    const fn = Math.pow(1 + r, n)
-    const emi = P * r * fn / (fn - 1)
-    const fm = Math.pow(1 + r, m)
-    const os = Math.max(0, P * fm - emi * (fm - 1) / r)
+    const emi = calcEmi(P, r, n)
+    const os = calcOutstanding(P, r, emi, m)
     return { mode: 'roi', emi, os, label1: 'Computed monthly EMI', label2: `Computed outstanding (after ${m}m)` }
   } else {
     const E = parseFloat(form.monthlyEmi) || 0

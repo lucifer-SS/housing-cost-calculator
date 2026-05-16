@@ -1,9 +1,6 @@
-export function calcEmi(principal, monthlyRate, months) {
-  if (months <= 0 || principal <= 0) return 0
-  if (monthlyRate === 0) return principal / months
-  const fn = Math.pow(1 + monthlyRate, months)
-  return principal * monthlyRate * fn / (fn - 1)
-}
+import { calcEmi } from './finance'
+
+export { calcEmi }
 
 export function buildSchedule({
   loanAmount,

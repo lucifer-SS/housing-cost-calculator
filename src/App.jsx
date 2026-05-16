@@ -8,7 +8,7 @@ import ExtraExpenses from './components/inputs/ExtraExpenses'
 import Results from './components/results/Results'
 import AmortizationPage from './components/amortization/AmortizationPage'
 import RentInvestmentPage from './components/rentinvestment/RentInvestmentPage'
-import { monthsBetween, xirr, computeLoanParams } from './utils/finance'
+import { calcEmi, calcOutstanding, monthsBetween, xirr, computeLoanParams } from './utils/finance'
 import { fmtINR, fmtDate } from './utils/format'
 
 // Dates computed relative to "1st of next month from today"
@@ -183,10 +183,8 @@ export default function App() {
           const n = form.loanTenureUnit === 'years' ? rawTenure * 12 : rawTenure
           if (rAnnual <= 0 || n <= 0) throw new Error('Please enter a valid interest rate and tenure.')
           const r = rAnnual / 1200
-          const fn = Math.pow(1 + r, n)
-          monthlyEmi = loanAmount * r * fn / (fn - 1)
-          const fm = Math.pow(1 + r, totalMonths)
-          outstandingLoan = Math.max(0, loanAmount * fm - monthlyEmi * (fm - 1) / r)
+          monthlyEmi = calcEmi(loanAmount, r, n)
+          outstandingLoan = calcOutstanding(loanAmount, r, monthlyEmi, totalMonths)
         } else {
           monthlyEmi = parseFloat(form.monthlyEmi) || 0
           outstandingLoan = parseFloat(form.outstandingLoan) || 0
